@@ -1,0 +1,8 @@
+*.swp
+*.swo
+e3
+build
+dist
+steam
+*.pyc
+*.egg-info
