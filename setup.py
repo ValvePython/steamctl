@@ -39,6 +39,9 @@ setup(
     ],
     keywords='steam steamctl steamid steamcommunity authenticator workshop',
     packages=['steamctl'] + ['steamctl.'+x for x in find_packages(where='steamctl')],
+    entry_points={
+        'console_scripts': ['steamctl = steamctl.__main__:main'],
+    },
     install_requires=install_requires,
     zip_safe=True,
 )
