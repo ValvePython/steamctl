@@ -1,8 +1,5 @@
+# PYTHON_ARGCOMPLETE_OK
 from __future__ import print_function
-
-import gevent.monkey
-gevent.monkey.patch_socket()
-gevent.monkey.patch_ssl()
 
 import sys
 import logging
@@ -14,7 +11,7 @@ import steamctl.commands.hlmaster
 _LOG = logging.getLogger(__appname__)
 
 def main():
-    parser, subparsers = generate_parser()
+    parser = generate_parser()
     args, unknown_args = parser.parse_known_args()
 
     if args.log_level != 'quiet':

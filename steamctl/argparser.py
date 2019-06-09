@@ -3,6 +3,7 @@ from steamctl import __appname__, __version__
 from types import FunctionType
 from collections import OrderedDict
 import argparse
+import argcomplete
 
 _subcommands = OrderedDict()
 
@@ -36,8 +37,6 @@ def generate_parser():
                             description='',
                             )
 
-    sps = {}
-
     for subcommand, (func, kwargs) in _subcommands.items():
         # lets description and epilog maintain identation
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
@@ -47,9 +46,10 @@ def generate_parser():
 
         sp = subparsers.add_parser(subcommand, **kwargs)
         func(sp)
-        sps[subcommand] = sp
 
-    return parser, sps
+    argcomplete.autocomplete(parser)
+
+    return parser
 
 
 def nested_print_usage(parser, args):

@@ -15,6 +15,7 @@ with open(path.join(here, 'steamctl/__init__.py'), encoding='utf-8') as f:
 install_requires = [
     'steam>=0.9.0,<1.0.0',
     'appdirs',
+    'argcomplete',
 ]
 
 setup(
