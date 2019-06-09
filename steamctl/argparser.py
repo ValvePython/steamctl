@@ -26,8 +26,7 @@ def generate_parser():
         parser.print_help()
 
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
-    parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='quiet', help='Set logging level')
-    parser.add_argument('-u', '--user')
+    parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
     parser.set_defaults(_cmd_func=print_help)
 
     subparsers = parser.add_subparsers(

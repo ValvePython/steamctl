@@ -5,6 +5,7 @@ import sys
 import logging
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
+
 import steamctl.commands.steamid
 import steamctl.commands.hlmaster
 
@@ -14,11 +15,10 @@ def main():
     parser = generate_parser()
     args, unknown_args = parser.parse_known_args()
 
-    if args.log_level != 'quiet':
-        logging.basicConfig(
-            format='[%(levelname)s] %(name)s: %(message)s',
-            level=getattr(logging, args.log_level.upper())
-            )
+    logging.basicConfig(
+        format='[%(levelname)s] %(name)s: %(message)s',
+        level=100 if args.log_level == 'quiet' else getattr(logging, args.log_level.upper())
+        )
 
     _LOG.debug("Parsed args: %s", vars(args))
 
