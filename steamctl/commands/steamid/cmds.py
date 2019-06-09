@@ -1,6 +1,5 @@
 
 import logging
-from steamctl.argparser import register_command
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,17 +33,3 @@ def cmd_steamid(args):
                                   suniverse=str(s.universe),
                                   is_valid=str(s.is_valid()),
                                   ))
-
-# ARG PARSER
-
-epilog = """\
-Example usage:
-    {prog} steamid 4
-
-"""
-
-
-@register_command('steamid', help='Parse SteamID representations', epilog=epilog)
-def cmd_parser(cp):
-    cp.add_argument('s_input', metavar='<accountid|steamid64|steam2|steam3|url>')
-    cp.set_defaults(_cmd_func=cmd_steamid)

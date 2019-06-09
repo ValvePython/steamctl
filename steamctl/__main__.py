@@ -28,7 +28,18 @@ def main():
         print("%s: unrecognized arguments: %s" % (parser.prog, ' '.join(unknown_args)), file=sys.stderr)
         sys.exit(1)
 
-    rcode = args._cmd_func(args=args)
+    cmd_func = args._cmd_func
+
+    if isinstance(cmd_func, str):
+        from importlib import import_module
+        subpkg, func = cmd_func.split(':', 1)
+        cmd_func = getattr(import_module(subpkg), func)
+
+    if cmd_func:
+        rcode = cmd_func(args=args)
+    else:
+        _LOG.debug('_cmd_func attribute is missing')
+        rcode = 1
 
     if rcode is not None:
         sys.exit(rcode)

@@ -37,11 +37,11 @@ def generate_parser():
                             description='',
                             )
 
-    for subcommand, (func, kwargs) in _subcommands.items():
+    for subcommand, (func, kwargs) in sorted(_subcommands.items(), key=lambda x: x[0]):
         # lets description and epilog maintain identation
         kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
 
-        if '{prog]' in kwargs.get('epilog', ''):
+        if '{prog}' in kwargs.get('epilog', ''):
             kwargs['epilog'] = kwargs['epilog'].format(prog=parser.prog)
 
         sp = subparsers.add_parser(subcommand, **kwargs)
