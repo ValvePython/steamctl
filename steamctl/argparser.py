@@ -28,6 +28,7 @@ def generate_parser():
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
     parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
     parser.set_defaults(_cmd_func=print_help)
+    parser.set_defaults(_cmd_pre=None)
 
     subparsers = parser.add_subparsers(
                             metavar='<command>',
@@ -45,8 +46,6 @@ def generate_parser():
 
         sp = subparsers.add_parser(subcommand, **kwargs)
         func(sp)
-
-    argcomplete.autocomplete(parser)
 
     return parser
 

@@ -3,16 +3,19 @@ from __future__ import print_function
 
 import sys
 import logging
+import argcomplete
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
 
 import steamctl.commands.steamid
 import steamctl.commands.hlmaster
+import steamctl.commands.webapi
 
 _LOG = logging.getLogger(__appname__)
 
 def main():
     parser = generate_parser()
+    argcomplete.autocomplete(parser)
     args, unknown_args = parser.parse_known_args()
 
     logging.basicConfig(
@@ -34,6 +37,9 @@ def main():
         from importlib import import_module
         subpkg, func = cmd_func.split(':', 1)
         cmd_func = getattr(import_module(subpkg), func)
+
+    if args._cmd_pre:
+        args._cmd_pre(args)
 
     if cmd_func:
         rcode = cmd_func(args=args)
