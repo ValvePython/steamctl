@@ -23,8 +23,6 @@ def main():
         level=100 if args.log_level == 'quiet' else getattr(logging, args.log_level.upper())
         )
 
-    _LOG.debug("Parsed args: %s", vars(args))
-
     if unknown_args:
         _LOG.debug("Unknown args: %s", unknown_args)
         nested_print_usage(parser, args)
@@ -40,6 +38,8 @@ def main():
 
     if args._cmd_pre:
         args._cmd_pre(args)
+
+    _LOG.debug("Parsed args: %s", vars(args))
 
     if cmd_func:
         rcode = cmd_func(args=args)
