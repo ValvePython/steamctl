@@ -93,8 +93,10 @@ def cmd_parser(cp):
     scp_call.add_argument('--apikey', type=str, help='WebAPI key to use')
     scp_call.add_argument('--format', choices=['json', 'json_line', 'vdf', 'xml'], default='json',
                           help='Output format')
-    scp_call.add_argument('--method', choices=['GET', 'POST'], default='GET', type=str,
+    scp_call.add_argument('--method', choices=['GET', 'POST'], type=str,
                           help='HTTP method to use')
+    scp_call.add_argument('--version', type=int,
+                          help='Method version')
     scp_call.add_argument('endpoint', type=str,
                           help='WebAPI endpoint name (eg ISteamWebAPIUtil.GetSupportedAPIList)')\
             .completer = endpoint_autocomplete

@@ -40,7 +40,7 @@ def cmd_webapi_list(args):
         _LOG.error("GetSupportedAPIList failed: %s", str(exp))
         if getattr(exp, 'response', None):
             _LOG.error("Response body: %s", exp.response.text)
-        return 1
+        return 1  # error
 
     if args.format != 'text':
         if args.format == 'json':
@@ -82,20 +82,44 @@ def cmd_webapi_list(args):
                 print('')
 
 def cmd_webapi_call(args):
+    # load key=value pairs. Stuff thats start with [ is a list, so parse as json
     try:
         params = {k: (json.loads(v) if v[0:1] == '[' else v) for k, v in args.params}
     except Exception as exp:
         _LOG.error("Error parsing params: %s", str(exp))
-        return 1
+        return 1  # error
 
-    if args.method == 'GET':
-        apicall = webapi.get
-    else:
+    apicall = webapi.get
+    version = args.version or 1
+
+    if args.method == 'POST':
         apicall = webapi.post
 
+    webapi_map = {}
+
+    # load cache webapi_interfaces if available
+    for interface in (UserCacheFile('webapi_interfaces.json').read_json() or {}):
+        for method in interface['methods']:
+            key = "{}.{}".format(interface['name'], method['name'])
+
+            if key not in webapi_map or webapi_map[key][1] < method['version']:
+                webapi_map[key] = method['httpmethod'], method['version']
+
+    # if --method or --version are unset, take them the cache
+    # This will the call POST if needed with specifying explicity
+    # This will prever the highest version of a method
+    if args.endpoint in webapi_map:
+        if args.method is None:
+            if webapi_map[args.endpoint][0] == 'POST':
+                apicall = webapi.post
+        if args.version is None:
+            version = webapi_map[args.endpoint][1]
+
+    # drop reserved words. these have special meaning for steam.webapi
     for reserved in ('key', 'format', 'raw', 'http_timeout', 'apihost', 'https'):
         params.pop(reserved, None)
 
+    # load key if available
     params.setdefault('key', args.apikey if args.apikey else None)
 
     if args.format !='text':
@@ -103,13 +127,15 @@ def cmd_webapi_call(args):
         params['raw'] = True
 
     try:
-        resp = apicall(*args.endpoint.split('.', 1), params=params)
+        interface, method = args.endpoint.split('.', 1)
+        resp = apicall(interface, method, version,  params=params)
     except Exception as exp:
         _LOG.error("%s failed: %s", args.endpoint, str(exp))
         if getattr(exp, 'response', None):
             _LOG.error("Response body: %s", exp.response.text)
-        return 1
+        return 1  # error
 
+    # by default we print json, other formats are shown as returned from api
     if args.format == 'json':
         json.dump(json.loads(resp), sys.stdout, indent=4, sort_keys=True)
         print('')
