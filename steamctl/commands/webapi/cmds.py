@@ -3,8 +3,11 @@ import logging
 import sys
 import json
 from steam import webapi
-from steamctl.utils import UserDataFile, UserCacheFile
+from steamctl.utils.storage import UserDataFile, UserCacheFile
+from steamctl.utils.web import make_requests_session
 from steamctl.commands.webapi import get_webapi_key
+
+webapi._make_requests_session = make_requests_session
 
 _LOG = logging.getLogger(__name__)
 

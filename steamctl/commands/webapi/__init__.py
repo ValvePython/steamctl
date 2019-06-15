@@ -1,7 +1,7 @@
 
 import sys
 from steamctl.argparser import register_command
-from steamctl.utils import UserDataFile, UserCacheFile
+from steamctl.utils.storage import UserDataFile, UserCacheFile
 from argcomplete import warn
 
 
