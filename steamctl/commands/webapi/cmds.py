@@ -4,6 +4,7 @@ import sys
 import json
 from steam import webapi
 from steamctl.utils import UserDataFile, UserCacheFile
+from steamctl.commands.webapi import get_webapi_key
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def cmd_webapi_clear(args):
 
 def cmd_webapi_list(args):
     params = {}
-    params.setdefault('key', args.apikey if args.apikey else None)
+    params.setdefault('key', args.apikey or get_webapi_key())
 
     if args.format !='text':
         params['format'] = 'json' if args.format == 'json_line' else args.format
@@ -120,7 +121,7 @@ def cmd_webapi_call(args):
         params.pop(reserved, None)
 
     # load key if available
-    params.setdefault('key', args.apikey if args.apikey else None)
+    params.setdefault('key', args.apikey or get_webapi_key())
 
     if args.format !='text':
         params['format'] = 'json' if args.format == 'json_line' else args.format

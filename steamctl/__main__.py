@@ -36,9 +36,6 @@ def main():
         subpkg, func = cmd_func.split(':', 1)
         cmd_func = getattr(import_module(subpkg), func)
 
-    if args._cmd_pre:
-        args._cmd_pre(args)
-
     _LOG.debug("Parsed args: %s", vars(args))
 
     if cmd_func:

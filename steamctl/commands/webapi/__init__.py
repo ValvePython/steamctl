@@ -4,12 +4,19 @@ from steamctl.argparser import register_command
 from steamctl.utils import UserDataFile, UserCacheFile
 from argcomplete import warn
 
+
+def get_webapi_key():
+    return UserDataFile('apikey.txt').read_full()
+
 epilog = """\
 Steam Web API Key:
 
     To get a key login with a Steam account and visit https://steamcommunity.com/dev/apikey
-    After that set the key by running:
+    You can save the key and have it applied automatically by running:
         {prog} webapi set-key KEY
+
+    Alternatively, you can provide for one-off calls:
+        {prog} webapi call --apikey YOURKEY ISteamNews.GetNewsForApp appid=570 count=1
 
 Examples:
 
@@ -19,7 +26,7 @@ Examples:
     Search for partial of the name:
         {prog} webapi list cmlist
 
-    View the parameters by using the --verbose flag:
+    View endpoint parameters by supplying the --verbose flag:
         {prog} webapi list -v cmlist
 
     Call an Web API endpoint:
@@ -30,10 +37,6 @@ Examples:
 def cmd_parser(cp):
     def print_help(*args, **kwargs):
         cp.print_help()
-
-    def load_key(args):
-        if not args.apikey:
-            args.apikey = UserDataFile('apikey.txt').read_full()
 
     cp.set_defaults(_cmd_func=print_help)
 
@@ -56,7 +59,6 @@ def cmd_parser(cp):
     scp_list.add_argument('-v' , '--verbose', action='store_true', help='List endpoint parameters')
     scp_list.add_argument('search', nargs='?', type=str, help='Text to search in the endpoint name. Only works with \'text\' format.')
     scp_list.set_defaults(_cmd_func=__name__ + '.cmds:cmd_webapi_list')
-    scp_list.set_defaults(_cmd_pre=load_key)
 
     def endpoint_autocomplete(prefix, parsed_args, **kwargs):
         interfaces = UserCacheFile('webapi_interfaces.json').read_json()
@@ -105,4 +107,3 @@ def cmd_parser(cp):
                           help='param=value pairs to pass to endpoint')\
             .completer = parameter_autocomplete
     scp_call.set_defaults(_cmd_func=__name__ + '.cmds:cmd_webapi_call')
-    scp_call.set_defaults(_cmd_pre=load_key)
