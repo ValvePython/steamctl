@@ -4,6 +4,7 @@ import gevent.socket
 from gevent.pool import Pool
 from gevent.queue import Queue
 from steam import game_servers as gs
+from steamctl.utils.format import print_table, fmt_time
 gs.socket = gevent.socket
 
 
@@ -25,17 +26,6 @@ def get_info_short(host, port):
                     shost=shost,
                     **data,
                     )
-
-def format_duration(seconds):
-    hours, seconds = divmod(seconds, 3600)
-    minutes, seconds = divmod(seconds, 60)
-
-    if hours and minutes:
-        return "{:.0f}h {:.0f}m {:.0f}s".format(hours, minutes, seconds)
-    elif minutes:
-        return "{:.0f}m {:.0f}s".format(minutes, seconds)
-    else:
-        return "{:.0f}s".format(seconds)
 
 # COMMANDS
 
@@ -89,21 +79,13 @@ def cmd_hlmaster_info(args):
         except Exception as exp:
             print("Error: {}".format(exp))
         else:
-            pad_name = 30
-            pad_score = 0
-            pad_duration = 0
-
-            for player in plist:
-                pad_name = max(pad_name, len(player['name']))
-                pad_score = max(pad_score, len(str(player['score'])))
-                pad_duration = max(pad_duration, len(format_duration(player['duration'])))
-
-            for player in plist:
-                print("{} | {} | {}".format(
-                    player['name'].ljust(pad_name),
-                    str(player['score']).rjust(pad_score),
-                    format_duration(player['duration']).rjust(pad_duration),
-                    ))
+            print_table([[
+                player['name'],
+                str(player['score']),
+                fmt_time(player['duration']),
+                ] for player in plist],
+                ['Name', '>Score', '>Duration'],
+                )
 
     if args.rules:
         if flags > 1:

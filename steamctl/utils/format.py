@@ -54,3 +54,15 @@ def fmt_size(size, decimal_places=0):
         size = size / (1000 ** power)
 
     return ("{:."+str(decimal_places)+"f} {}").format(size, suffixes[power])
+
+def fmt_time(seconds):
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+
+    if hours and minutes:
+        return "{:.0f}h {:.0f}m {:.0f}s".format(hours, minutes, seconds)
+    elif minutes:
+        return "{:.0f}m {:.0f}s".format(minutes, seconds)
+    else:
+        return "{:.0f}s".format(seconds)
+
