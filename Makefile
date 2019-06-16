@@ -23,7 +23,7 @@ clean:
 
 dist: clean
 	python setup.py sdist
-	python setup.py bdist_wheel --universal
+	python setup.py bdist_wheel
 
 upload: dist
 	twine upload -r pypi dist/*

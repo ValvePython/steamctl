@@ -57,9 +57,9 @@ Help print
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/steamctl.svg?style=flat&label=stable
-    :target: https://pypi.org/project/steam/
+    :target: https://pypi.org/project/steamctl/
     :alt: Latest version released on PyPi
 
 .. |license| image:: https://img.shields.io/pypi/l/steamctl.svg?style=flat&label=license
-    :target: https://pypi.org/project/steam/
+    :target: https://pypi.org/project/steamctl/
     :alt: MIT License
