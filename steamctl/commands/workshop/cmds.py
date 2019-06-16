@@ -18,7 +18,7 @@ def cmd_workshop_search(args):
     apikey = args.apikey or get_webapi_key()
 
     if not apikey:
-        _LOG.error("WebAPI is required. Set one with: steamctl webapi set-key YOURKEY")
+        _LOG.error("No WebAPI key set. See: steamctl webapi -h")
         return 1  #error
 
     maxpages, _ = divmod(args.numresults, 100)
@@ -98,7 +98,7 @@ def cmd_workshop_download(args):
     apikey = args.apikey or get_webapi_key()
 
     if not apikey:
-        _LOG.error("WebAPI is required. Set one with: steamctl webapi set-key YOURKEY")
+        _LOG.error("No WebAPI key set. See: steamctl webapi -h")
         return 1  #error
 
     params = {
@@ -166,5 +166,5 @@ def download_via_url(args, pubfile):
             pbar.update(len(chunk))
 
 def download_via_steampipe(args, pubfile):
-    _LOG.error("Not available yet")
+    _LOG.error("Download type not supported yet")
     return 1
