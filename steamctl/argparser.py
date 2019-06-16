@@ -5,6 +5,21 @@ from collections import OrderedDict
 import argparse
 import argcomplete
 
+epilog = """\
+Tab Completion
+
+    Additional steps are needed to activate bash tab completion.
+    See https://argcomplete.readthedocs.io/en/latest/#global-completion
+
+    To enable globally run:
+        activate-global-python-argcomplete
+
+    To enable for the current session run:
+        eval "$(register-python-argcomplete steamctl)"
+
+    The above code can be added to .bashrc to persist between sessions for the user.
+    """
+
 _subcommands = OrderedDict()
 
 def register_command(command, **kwargs):
@@ -19,7 +34,10 @@ def register_command(command, **kwargs):
     return func_wrap
 
 def generate_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=epilog,
+        )
     parser.prog = __appname__
 
     def print_help(*args, **kwargs):
