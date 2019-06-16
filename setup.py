@@ -25,7 +25,7 @@ setup(
     version=__version__,
     description='Steam things from the command line',
     long_description=long_description,
-#   url='https://github.com/ValvePython/steam',
+    url='https://github.com/rossengeorgiev/steamctl',
     author=__author__,
     author_email='rossen@rgp.io',
     license='MIT',
