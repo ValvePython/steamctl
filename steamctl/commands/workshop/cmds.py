@@ -1,7 +1,5 @@
 
-import sys
 import os
-import json
 import logging
 from io import open
 from tqdm import tqdm
