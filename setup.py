@@ -16,6 +16,7 @@ install_requires = [
     'steam>=0.9.0,<1.0.0',
     'appdirs',
     'argcomplete',
+    'tqdm',
 ]
 
 setup(

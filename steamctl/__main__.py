@@ -10,6 +10,7 @@ from steamctl.argparser import generate_parser, nested_print_usage
 import steamctl.commands.steamid
 import steamctl.commands.hlmaster
 import steamctl.commands.webapi
+import steamctl.commands.workshop
 
 _LOG = logging.getLogger(__appname__)
 

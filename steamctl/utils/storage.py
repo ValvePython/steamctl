@@ -1,5 +1,6 @@
 
 import os
+import re
 import json
 import logging
 from time import time
@@ -11,12 +12,20 @@ from steamctl import __appname__
 _LOG = logging.getLogger(__name__)
 _appdirs = AppDirs(__appname__)
 
-def ensure_data_dir(path):
+def ensure_dir(path, mode=0o750):
     dirpath = os.path.dirname(path)
 
     if not os.path.exists(dirpath):
         _LOG.debug("Making missing dirs: %s", dirpath)
-        os.makedirs(dirpath, 0o700)
+        os.makedirs(dirpath, mode)
+
+def normpath(path):
+    if os.sep == '/':
+        path = path.replace('\\', '/')
+    return os.path.normpath(path)
+
+def sanitizerelpath(path):
+    return re.sub(r'^((\.\.)?[\\/])*', '', normpath(path))
 
 class DataFile(object):
     _root_path = None
@@ -35,7 +44,7 @@ class DataFile(object):
 
     def open(self, mode):
         _LOG.debug("Opening file (%s): %s", mode, self.path)
-        ensure_data_dir(self.path)
+        ensure_dir(self.path, 0o700)
         return open(self.path, mode)
 
     def read_full(self):
