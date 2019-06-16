@@ -6,6 +6,7 @@ import logging
 from time import time
 from io import open
 from contextlib import contextmanager
+import fnmatch
 from appdirs import AppDirs
 from steamctl import __appname__
 
@@ -27,12 +28,22 @@ def normpath(path):
 def sanitizerelpath(path):
     return re.sub(r'^((\.\.)?[\\/])*', '', normpath(path))
 
-class DataFile(object):
+
+class FileBase(object):
     _root_path = None
 
-    def __init__(self, name, mode='r'):
+    def __init__(self, relpath, mode='r'):
         self.mode = mode
-        self.path = os.path.join(self._root_path, name)
+        self.relpath = relpath
+        self.path = os.path.join(self._root_path, relpath)
+        self.filename = os.path.basename(self.path)
+
+    def __repr__(self):
+        return "%s(%r, mode=%r)" % (
+            self.__class__.__name__,
+            self.relpath,
+            self.mode,
+            )
 
     def exists(self):
         return os.path.exists(self.path)
@@ -77,8 +88,38 @@ class DataFile(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self._fp.close()
 
-class UserDataFile(DataFile):
+class UserDataFile(FileBase):
     _root_path = _appdirs.user_data_dir
 
-class UserCacheFile(DataFile):
+class UserCacheFile(FileBase):
     _root_path = _appdirs.user_cache_dir
+
+class DirectoryBase(object):
+    _root_path = None
+    _file_type = None
+
+    def __init__(self, path='.'):
+        self.path = os.path.join(self._root_path, path)
+
+        if self.exists() and not os.path.isdir(self.path):
+            raise ValueError("Path is not a directory: %s" % self.path)
+
+    def exists(self):
+        return os.path.exists(self.path)
+
+    def list_files(self, pattern=None):
+        if not os.path.exists(self.path):
+            return []
+
+        for root, dirs, files in os.walk(self.path):
+            if pattern:
+                files =  fnmatch.filter(files, pattern)
+            return [self._file_type(os.path.join(self.path, filename)) for filename in files]
+
+class UserDataDirectory(DirectoryBase):
+    _root_path = _appdirs.user_data_dir
+    _file_type = UserDataFile
+
+class UserCacheDirectory(DirectoryBase):
+    _root_path = _appdirs.user_cache_dir
+    _file_type = UserCacheFile

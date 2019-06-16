@@ -1,13 +1,15 @@
 
 from math import log
 from functools import reduce
+import dateutil
+import arrow
 
 def print_table(rows, column_names=None):
     """Taken a list of columns and prints a table where column are spaced automatically"""
 
     # calculates the max width for every column
-    widths = reduce(lambda a, b: [max(ac, bc) for ac, bc in zip(a, b)],
-                    map(lambda row: map(len, row), rows))
+    widths = list(reduce(lambda a, b: [max(ac, bc) for ac, bc in zip(a, b)],
+                         map(lambda row: map(len, row), rows)))
 
     justify_right = [False] * len(widths)
 
@@ -55,7 +57,7 @@ def fmt_size(size, decimal_places=0):
 
     return ("{:."+str(decimal_places)+"f} {}").format(size, suffixes[power])
 
-def fmt_time(seconds):
+def fmt_duration(seconds):
     hours, seconds = divmod(seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
 
@@ -66,3 +68,8 @@ def fmt_time(seconds):
     else:
         return "{:.0f}s".format(seconds)
 
+def fmt_datetime(timestamp, utc=False):
+    if utc:
+        return arrow.get(timestamp).strftime('%Y-%m-%d %H:%M:%S UTC')
+    else:
+        return arrow.get(timestamp).to(dateutil.tz.gettz()).strftime('%Y-%m-%d %H:%M:%S %Z')

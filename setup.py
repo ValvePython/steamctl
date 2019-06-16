@@ -17,6 +17,7 @@ install_requires = [
     'appdirs',
     'argcomplete',
     'tqdm',
+    'arrow',
 ]
 
 setup(

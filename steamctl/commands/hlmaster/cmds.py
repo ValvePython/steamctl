@@ -4,7 +4,7 @@ import gevent.socket
 from gevent.pool import Pool
 from gevent.queue import Queue
 from steam import game_servers as gs
-from steamctl.utils.format import print_table, fmt_time
+from steamctl.utils.format import print_table, fmt_duration
 gs.socket = gevent.socket
 
 
@@ -82,7 +82,7 @@ def cmd_hlmaster_info(args):
             print_table([[
                 player['name'],
                 str(player['score']),
-                fmt_time(player['duration']),
+                fmt_duration(player['duration']),
                 ] for player in plist],
                 ['Name', '>Score', '>Duration'],
                 )
