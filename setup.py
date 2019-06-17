@@ -23,7 +23,7 @@ install_requires = [
 setup(
     name='steamctl',
     version=__version__,
-    description='Steam things from the command line',
+    description='Take control of Steam from your terminal',
     long_description=long_description,
     url='https://github.com/rossengeorgiev/steamctl',
     author=__author__,
@@ -43,6 +43,7 @@ setup(
     entry_points={
         'console_scripts': ['steamctl = steamctl.__main__:main'],
     },
+    python_requires='>=3.4, <4',
     install_requires=install_requires,
     zip_safe=True,
 )
