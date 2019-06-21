@@ -25,7 +25,7 @@ setup(
     version=__version__,
     description='Take control of Steam from your terminal',
     long_description=long_description,
-    url='https://github.com/rossengeorgiev/steamctl',
+    url='https://github.com/ValvePython/steamctl',
     author=__author__,
     author_email='rossen@rgp.io',
     license='MIT',

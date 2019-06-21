@@ -15,7 +15,7 @@ Install directly from ``github``:
 
 .. code:: bash
 
-    pip install git+https://github.com/rossengeorgiev/steamctl#egg=steamctl
+    pip install git+https://github.com/ValvePython/steamctl#egg=steamctl
 
 
 Help print
