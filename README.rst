@@ -18,44 +18,35 @@ Install directly from ``github``:
     pip install git+https://github.com/ValvePython/steamctl#egg=steamctl
 
 
-Help print
-----------
+Command list
+-------------
 
 
 .. code:: text
 
-    $ steamctl --help
-    usage: steamctl [-h] [--version] [-l {quiet,info,debug}] <command> ...
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --version             show program's version number and exit
-      -l {quiet,info,debug}, --log_level {quiet,info,debug}
-                            Set logging level
-
-    List of commands:
-
-      <command>
         authenticator       Manage Steam authenticators
         hlmaster            Query master server and server information
         steamid             Parse SteamID representations
         webapi              Access to WebAPI
         workshop            Search and download workshop items
 
-    Tab Completion
+Previews
+--------
 
-        Additional steps are needed to activate bash tab completion.
-        See https://argcomplete.readthedocs.io/en/latest/#global-completion
+``steamctl hlmaster``
 
-        To enable globally run:
-            activate-global-python-argcomplete
+.. image:: https://asciinema.org/a/253275.png
+    :target: https://asciinema.org/a/253275
+    :alt: preview: steamctl hlmaster
 
-        To enable for the current session run:
-            eval "$(register-python-argcomplete steamctl)"
+``steamctl workshop``
 
-        The above code can be added to .bashrc to persist between sessions for the user.
-
-
+.. image:: https://asciinema.org/a/253277.png
+    :target: https://asciinema.org/a/253277
+    :alt: preview: steamctl workshop
+    
+    
+ 
 .. |pypi| image:: https://img.shields.io/pypi/v/steamctl.svg?style=flat&label=stable
     :target: https://pypi.org/project/steamctl/
     :alt: Latest version released on PyPi
