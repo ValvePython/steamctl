@@ -1,6 +1,9 @@
 # PYTHON_ARGCOMPLETE_OK
 from __future__ import print_function
 
+from signal import signal, SIGPIPE, SIG_DFL
+signal(SIGPIPE, SIG_DFL)
+
 import sys
 import logging
 import argcomplete
