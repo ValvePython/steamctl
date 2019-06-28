@@ -81,15 +81,15 @@ def cmd_authenticator_add(args):
             while True:
                 phnum = pmt_input("Enter phone number:", regex=r'^(\+|00)[0-9]+$')
 
-#               resp = sa.validate_phone_number(phnum)
-#               _LOG.debug("Phone number validation for %r: %s", phnum, resp)
+                resp = sa.validate_phone_number(phnum)
+                _LOG.debug("Phone number validation for %r: %s", phnum, resp)
 
-#               if not resp.get('is_valid', False):
-#                   print("Phone number is not valid for Steam.")
-#                   continue
+                if not resp.get('is_valid', False):
+                    print("That number is not valid for Steam.")
+                    continue
 
                 if not sa.add_phone_number(phnum):
-                    print("Steam didn't accept the number.")
+                    print("Failed to add phone number!")
                     continue
 
                 print("Phone number added. Confirmation SMS sent.")
@@ -137,7 +137,7 @@ def cmd_authenticator_remove(args):
 
     if args.force:
         secrets_file.remove()
-        print("Forceful removal of %r succesful" % account)
+        print("Forceful removal of %r successful" % account)
         return
 
     print("To remove an authenticator, first we need to login to Steam")
