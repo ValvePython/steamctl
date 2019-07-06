@@ -16,36 +16,51 @@ _LOG = logging.getLogger(__name__)
 
 class BetterMWA(webauth.MobileWebAuth):
     def __init__(self, username):
-        webauth.MobileWebAuth.__init__(self, username, '')
+        webauth.MobileWebAuth.__init__(self, username)
 
-    def cli_login(self, sa_instance=None):
+    def bcli_login(self, password=None, sa_instance=None):
+        email_code = twofactor_code = ''
+
         while True:
             try:
-                if not self.password:
+                if not password:
                     raise webauth.LoginIncorrect
-                return self.login(captcha, email_code, twofactor_code)
+                return self.login(password, captcha, email_code, twofactor_code)
             except (webauth.LoginIncorrect, webauth.CaptchaRequired) as exp:
                 email_code = twofactor_code = ''
 
                 if isinstance(exp, webauth.LoginIncorrect):
-                    prompt = ("Enter password for %s: " if not self.password else
+                    prompt = ("Enter password for %s: " if not password else
                               "Invalid password for %s. Enter password: ")
-                    self.password = getpass(prompt % repr(self.username))
+                    password = getpass(prompt % repr(self.username))
                 if isinstance(exp, webauth.CaptchaRequired):
-                    prompt = "Solve CAPTCHA at %s\nCAPTCHA code: " % self.captcha_url
-                    captcha = input(prompt)
-                else:
-                    captcha = ''
+                    if captcha:
+                        print("Login error: %s" % str(exp))
+                        if not pmt_confirmation("Try again?", default_yes=True):
+                            raise EOFError
+                        self.refresh_captcha()
+
+                    if self.captcha_url:
+                        prompt = "Solve CAPTCHA at %s\nCAPTCHA code: " % self.captcha_url
+                        captcha = input(prompt)
+                        continue
+
+                captcha = ''
             except webauth.EmailCodeRequired:
                 prompt = ("Enter email code: " if not email_code else
                           "Incorrect code. Enter email code: ")
                 email_code, twofactor_code = input(prompt), ''
-            except webauth.TwoFactorCodeRequired:
+            except webauth.TwoFactorCodeRequired as exp:
                 if not sa_instance:
                     prompt = ("Enter 2FA code: " if not twofactor_code else
                               "Incorrect code. Enter 2FA code: ")
                     email_code, twofactor_code = '', input(prompt)
                 else:
+                    if twofactor_code:
+                        print("Login error: %s" % str(exp))
+                        if not pmt_confirmation("Try again?", default_yes=True):
+                            raise EOFError
+
                     email_code, twofactor_code = '', sa_instance.get_code()
 
 
@@ -62,14 +77,14 @@ def cmd_authenticator_add(args):
 
     wa = BetterMWA(account)
     try:
-        wa.cli_login()
+        wa.bcli_login()
     except (KeyboardInterrupt, EOFError):
         print("Login interrupted")
         return 1  # error
 
     print("Login successful. Checking pre-conditions...")
 
-    sa = SteamAuthenticator(medium=wa)
+    sa = SteamAuthenticator(backend=wa)
 
     # check phone number, and add one if its missing
     if not sa.has_phone_number():
@@ -144,10 +159,10 @@ def cmd_authenticator_remove(args):
     print("Account name:", account)
 
     wa = BetterMWA(account)
-    sa = SteamAuthenticator(secrets, medium=wa)
+    sa = SteamAuthenticator(secrets, backend=wa)
 
     try:
-        wa.cli_login(sa_instance=sa)
+        wa.bcli_login(sa_instance=sa)
     except (KeyboardInterrupt, EOFError):
         print("Login interrupted")
         return 1  # error
