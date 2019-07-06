@@ -13,7 +13,7 @@ with open(path.join(here, 'steamctl/__init__.py'), encoding='utf-8') as f:
     __author__ = f.readline().split('"')[1]
 
 install_requires = [
-    'steam>=0.9.0,<1.0.0',
+    'steam~=1.0.0a1',
     'appdirs',
     'argcomplete',
     'tqdm',
@@ -43,7 +43,7 @@ setup(
     entry_points={
         'console_scripts': ['steamctl = steamctl.__main__:main'],
     },
-    python_requires='>=3.4, <4',
+    python_requires='~=3.4',
     install_requires=install_requires,
     zip_safe=True,
 )
