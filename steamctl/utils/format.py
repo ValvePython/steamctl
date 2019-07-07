@@ -49,11 +49,13 @@ def fmt_size(size, decimal_places=0):
     """Format size in bytes into friendly format"""
 
     suffixes = 'B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'
+    power = 0
 
-    power = int(log(size, 1000))
+    if size > 0:
+        power = int(log(size, 1000))
 
-    if power:
-        size = size / (1000 ** power)
+        if power:
+            size = size / (1000 ** power)
 
     return ("{:."+str(decimal_places)+"f} {}").format(size, suffixes[power])
 
