@@ -1,5 +1,4 @@
 
-import sys
 from steamctl.argparser import register_command
 from steamctl.utils.storage import UserDataFile, UserCacheFile
 from argcomplete import warn
@@ -41,8 +40,11 @@ def cmd_parser(cp):
 
     scp_dl = sub_cp.add_parser("download", help="Download a workshop item")
     scp_dl.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_dl.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')
+    scp_dl.add_argument('--user', type=str, help='Username for Steam login')
+    scp_dl.add_argument('--cell_id', type=int, help='Cell ID to use for download')
     scp_dl.add_argument('-o', '--output', type=str, default='', help='Path to directory for the downloaded files (default: cwd)')
     scp_dl.add_argument('-nd', '--no-directories', action='store_true', help='Do not create directories')
     scp_dl.add_argument('-np', '--no-progress', action='store_true', help='Do not create directories')
     scp_dl.add_argument('id', type=int, help='Workshop item ID')
-    scp_dl.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_download')
+    scp_dl.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_workshop_download')

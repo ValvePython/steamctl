@@ -45,6 +45,8 @@ def generate_parser():
 
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
     parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
+    parser.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')
+    parser.add_argument('--user', type=str, help='Username for Steam login')
     parser.set_defaults(_cmd_func=print_help)
 
     subparsers = parser.add_subparsers(

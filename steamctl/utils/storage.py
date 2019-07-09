@@ -17,7 +17,7 @@ def ensure_dir(path, mode=0o750):
     dirpath = os.path.dirname(path)
 
     if not os.path.exists(dirpath):
-        _LOG.debug("Making missing dirs: %s", dirpath)
+        _LOG.debug("Making dirs: %s", dirpath)
         os.makedirs(dirpath, mode)
 
 def normpath(path):
@@ -103,6 +103,9 @@ class DirectoryBase(object):
 
         if self.exists() and not os.path.isdir(self.path):
             raise ValueError("Path is not a directory: %s" % self.path)
+
+    def mkdir(self):
+        ensure_dir(self.path + os.sep, 0o700)
 
     def exists(self):
         return os.path.exists(self.path)
