@@ -13,6 +13,10 @@ Examples:
 
     Search for Dota 2 custom games:
         {prog} workshop search --appid 570 --tag 'Custom Game' auto chess
+
+    Downlaod workshop files, such as Dota 2 custom maps or CSGO maps:
+        {prog} workshop download 12345678
+
 """
 
 @register_command('workshop', help='Search and download workshop items', epilog=epilog)

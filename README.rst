@@ -25,6 +25,7 @@ Command list
 .. code:: text
 
         authenticator       Manage Steam authenticators
+        depot               List and download from Steam depots
         hlmaster            Query master server and server information
         steamid             Parse SteamID representations
         webapi              Access to WebAPI
@@ -44,9 +45,8 @@ Previews
 .. image:: https://asciinema.org/a/253277.png
     :target: https://asciinema.org/a/253277
     :alt: preview: steamctl workshop
-    
-    
- 
+
+
 .. |pypi| image:: https://img.shields.io/pypi/v/steamctl.svg?style=flat&label=stable
     :target: https://pypi.org/project/steamctl/
     :alt: Latest version released on PyPi

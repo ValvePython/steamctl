@@ -6,6 +6,27 @@ from argcomplete import warn
 
 
 epilog = """\
+
+Examples:
+
+    Show manifest info for specific manifest:
+        {prog} depot info --app 570 --depot 570 --manifest 7280959080077824592
+
+    Show manifest info from a file:
+        {prog} depot info -f /Steam/depotcache/381450_8619474727384971127.manifest
+
+    List manifest files:
+        {prog} depot list -f /Steam/depotcache/381450_8619474727384971127.manifest
+
+    List files from all manifest for app:
+        {prog} depot list --app 570
+
+    Download files from a manifest to a directory called 'temp':
+        {prog} depot download --app 570 --depot 570 --manifest 7280959080077824592 -o ./temp
+
+    Download all files for an app to a directory called 'temp':
+        {prog} depot download --app 570 -o ./temp
+
 """
 
 @register_command('depot', help='List and download from Steam depots', epilog=epilog)
@@ -47,7 +68,7 @@ def cmd_parser(cp):
     fexcl.add_argument('-re', '--regex', type=str, help='Reguar expression for matching filepath')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_depot_list')
 
-    scp_dl = sub_cp.add_parser("download", help="Download a workshop item")
+    scp_dl = sub_cp.add_parser("download", help="Download depot files")
     scp_dl.add_argument('--cell_id', type=int, help='Cell ID to use for download')
     scp_dl.add_argument('-os', choices=['any', 'win', 'win64', 'linux', 'linux64', 'macos'],
                         default='any',
