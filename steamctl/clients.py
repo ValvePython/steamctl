@@ -2,12 +2,15 @@ import gevent.monkey
 gevent.monkey.patch_socket()
 gevent.monkey.patch_ssl()
 
+import os
 import logging
 from steam.enums import EResult
 from steam.client import SteamClient
-from steam.client.cdn import CDNClient, CDNDepotManifest
+from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile
+from steam.exceptions import SteamError
 
-from steamctl.utils.storage import UserCacheFile, UserDataFile, UserDataDirectory
+from steamctl.utils.format import fmt_size
+from steamctl.utils.storage import UserCacheFile, UserDataFile, UserDataDirectory, ensure_dir, sanitizerelpath
 
 cred_dir = UserDataDirectory('client')
 
@@ -61,7 +64,47 @@ class CachingSteamClient(SteamClient):
 
         return result
 
+
+class CTLDepotFile(CDNDepotFile):
+    def download_to(self, target, no_make_dirs=False, pbar=None):
+        relpath = sanitizerelpath(self.filename)
+
+        if no_make_dirs:
+            relpath = os.path.basename(relpath)
+
+        relpath = os.path.join(target, relpath)
+
+        filepath = os.path.abspath(relpath)
+        ensure_dir(filepath)
+
+        checksum = self.file_mapping.sha_content.hex()
+
+        with open(filepath, 'wb') as fp:
+            if pbar:
+                pbar.write('Downloading to {}  ({}, {})'.format(
+                    relpath,
+                    fmt_size(self.size),
+                    checksum
+                    ))
+
+            for chunk in self.chunks:
+                data = self.manifest.cdn_client.get_chunk(
+                                self.manifest.app_id,
+                                self.manifest.depot_id,
+                                chunk.sha.hex(),
+                                )
+
+                fp.write(data)
+
+                if pbar:
+                    pbar.update(len(data))
+
+class CTLDepotManifest(CDNDepotManifest):
+    DepotFileClass = CTLDepotFile
+
+
 class CachingCDNClient(CDNClient):
+    DepotManifestClass = CTLDepotManifest
     _LOG = logging.getLogger('CachingCDNClient')
 
     def __init__(self, *args, **kwargs):
@@ -71,13 +114,9 @@ class CachingCDNClient(CDNClient):
         self.depot_keys.update(self.get_cached_depot_keys())
 
     def get_cached_depot_keys(self):
-        depot_keys = {}
-
-        for app_id, depots in (UserCacheFile('depot_keys.json').read_json() or {}).items():
-            for depot_id, key in depots.items():
-                depot_keys[(int(app_id), int(depot_id))] = bytes.fromhex(key)
-
-        return depot_keys
+        return {int(depot_id): bytes.fromhex(key)
+                for depot_id, key in (UserDataFile('depot_keys.json').read_json() or {}).items()
+                }
 
     def save_cache(self):
         cached_depot_keys = self.get_cached_depot_keys()
@@ -86,13 +125,11 @@ class CachingCDNClient(CDNClient):
             return
 
         self.depot_keys.update(cached_depot_keys)
-        out = {}
+        out = {str(depot_id): key.hex()
+               for depot_id, key in self.depot_keys.items()
+               }
 
-        # cache depot decryption keys
-        for (app_id, depot_id), key in self.depot_keys.items():
-            out.setdefault(str(app_id), {})[str(depot_id)] = key.hex()
-
-        UserCacheFile('depot_keys.json').write_json(out)
+        UserDataFile('depot_keys.json').write_json(out)
 
     def get_cached_manifest(self, app_id, depot_id, manifest_gid):
         key = (app_id, depot_id, manifest_gid)
@@ -107,7 +144,7 @@ class CachingCDNClient(CDNClient):
         if cached_manifest.exists():
             with cached_manifest.open('rb') as fp:
                 try:
-                    manifest = CDNDepotManifest(self, app_id, fp.read())
+                    manifest = self.DepotManifestClass(self, app_id, fp.read())
                 except Exception as exp:
                     self._LOG.debug("Error parsing cached manifest: %s", exp)
                 else:

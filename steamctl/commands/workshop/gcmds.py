@@ -3,6 +3,8 @@ import gevent.monkey
 gevent.monkey.patch_socket()
 gevent.monkey.patch_ssl()
 
+from gevent.pool import Pool as GPool
+
 import os
 import sys
 import logging
@@ -10,9 +12,9 @@ from io import open
 from steam import webapi
 from steam.exceptions import SteamError
 from steam.enums import EResult
-from steamctl.utils.storage import ensure_dir, sanitizerelpath, UserCacheFile
+from steamctl.utils.storage import ensure_dir, sanitizerelpath
 from steamctl.utils.web import make_requests_session
-from steamctl.utils.format import print_table, fmt_size
+from steamctl.utils.format import fmt_size
 from steamctl.utils.tqdm import tqdm, fake_tqdm
 from steamctl.commands.webapi import get_webapi_key
 
@@ -104,7 +106,7 @@ def download_via_steampipe(args, pubfile):
     key = pubfile['consumer_appid'], pubfile['consumer_appid'], pubfile['hcontent_file']
 
     # only login if we dont have depot decryption key
-    if (pubfile['consumer_appid'], pubfile['consumer_appid']) not in cdn.depot_keys:
+    if int(pubfile['consumer_appid']) not in cdn.depot_keys:
         result = s.login_from_args(args)
 
         if result == EResult.OK:
@@ -133,29 +135,17 @@ def download_via_steampipe(args, pubfile):
     else:
         pbar = fake_tqdm()
 
+    tasks = GPool(4)
+
     for mfile in manifest:
         if not mfile.is_file:
             continue
+        tasks.spawn(mfile.download_to, args.output,
+                    no_make_dirs=args.no_directories,
+                    pbar=pbar)
 
-        relpath = sanitizerelpath(mfile.filename)
-
-        if args.no_directories:
-            relpath = os.path.basename(relpath)
-
-        relpath = os.path.join(args.output, relpath)
-
-        filepath = os.path.abspath(relpath)
-        ensure_dir(filepath)
-
-        with open(filepath, 'wb') as fp:
-            pbar.write('Downloading to {} ({})'.format(
-                relpath,
-                fmt_size(mfile.size),
-                ))
-
-            for chunk in iter(lambda: mfile.read(1024**2), b''):
-                fp.write(chunk)
-                pbar.update(len(chunk))
+    # wait on all downloads to finish
+    tasks.join()
 
     # clean and exit
     pbar.close()
