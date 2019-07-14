@@ -58,8 +58,29 @@ def init_clients(args):
         else:
             print("Checking licenses")
             cdn.load_licenses()
+
+            def branch_filter(depot_id, info):
+                if args.depot is not None:
+                    if args.depot != depot_id:
+                        return False
+
+                if args.os != 'any':
+                    if args.os[-2:] == '64':
+                        os, arch = args.os[:-2], args.os[-2:]
+                    else:
+                        os, arch = args.os, None
+
+                    config = info.get('config', {})
+
+                    if 'oslist' in config and (os not in config['oslist'].split(',')):
+                        return False
+                    if 'osarch' in config and config['osarch'] != arch:
+                        return False
+
+                return True
+
             print("Getting manifests for 'public' branch")
-            manifests = cdn.get_manifests(args.app)
+            manifests = cdn.get_manifests(args.app, filter_func=branch_filter)
 
         _LOG.debug("Got manifests: %r", manifests)
 
@@ -86,6 +107,17 @@ def cmd_depot_info(args):
                 print("Unique/Total chunks:", unique_chunks, "/", nchunks, "({:.2f}%)".format(((1-(unique_chunks / nchunks))*100) if nchunks else 0))
                 print("Encrypted Filenames:", repr(manifest.metadata.filenames_encrypted))
                 print("Number of Files:", len(manifest.payload.mappings))
+
+                depot_info = cdn.app_depots.get(manifest.app_id, {}).get(str(manifest.metadata.depot_id))
+
+                if depot_info:
+                    print("Config:", depot_info.get('config', '{}'))
+                    if 'dlcappid' in depot_info:
+                        print("DLC AppID:", depot_info['dlcappid'])
+
+                    print("Open branches:", ', '.join(depot_info.get('manifests', {}).keys()))
+                    print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
+
     except SteamError as exp:
         print(str(exp))
         return 1  # error
