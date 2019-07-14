@@ -1,8 +1,6 @@
-|pypi| |license|
+|pypi| |pypipy| |license|
 
 Take control of Steam from your terminal
-
-Requires Python ``3.4+``.
 
 Install
 -------
@@ -50,6 +48,9 @@ Previews
 .. |pypi| image:: https://img.shields.io/pypi/v/steamctl.svg?style=flat&label=stable
     :target: https://pypi.org/project/steamctl/
     :alt: Latest version released on PyPi
+    
+.. |pypipy| image:: https://img.shields.io/pypi/pyversions/steamctl.svg?label=%20&logo=python&logoColor=white 
+    :alt: PyPI - Python Version
 
 .. |license| image:: https://img.shields.io/pypi/l/steamctl.svg?style=flat&label=license
     :target: https://pypi.org/project/steamctl/
