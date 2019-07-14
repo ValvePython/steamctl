@@ -55,7 +55,6 @@ def cmd_parser(cp):
     scp_dl.add_argument('-o', '--output', type=str, default='', help='Path to directory for the downloaded files (default: cwd)')
     scp_dl.add_argument('-nd', '--no-directories', action='store_true', help='Do not create directories')
     scp_dl.add_argument('-np', '--no-progress', action='store_true', help='Do not create directories')
-    scp_dl.add_argument('-f', '--file', type=argparse.FileType('rb'), nargs='?', help='Path to a manifest file')
     scp_dl.add_argument('-a', '--app', type=int, help='App ID')
     scp_dl.add_argument('-d', '--depot', type=int, help='Depot ID')
     scp_dl.add_argument('-m', '--manifest', type=int, help='Manifest GID')
