@@ -108,15 +108,16 @@ def cmd_depot_info(args):
                 print("Encrypted Filenames:", repr(manifest.metadata.filenames_encrypted))
                 print("Number of Files:", len(manifest.payload.mappings))
 
-                depot_info = cdn.app_depots.get(manifest.app_id, {}).get(str(manifest.metadata.depot_id))
+                if cdn:
+                    depot_info = cdn.app_depots.get(manifest.app_id, {}).get(str(manifest.metadata.depot_id))
 
-                if depot_info:
-                    print("Config:", depot_info.get('config', '{}'))
-                    if 'dlcappid' in depot_info:
-                        print("DLC AppID:", depot_info['dlcappid'])
+                    if depot_info:
+                        print("Config:", depot_info.get('config', '{}'))
+                        if 'dlcappid' in depot_info:
+                            print("DLC AppID:", depot_info['dlcappid'])
 
-                    print("Open branches:", ', '.join(depot_info.get('manifests', {}).keys()))
-                    print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
+                        print("Open branches:", ', '.join(depot_info.get('manifests', {}).keys()))
+                        print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
 
     except SteamError as exp:
         print(str(exp))
