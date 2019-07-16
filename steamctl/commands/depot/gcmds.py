@@ -27,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 
 @contextmanager
 def init_clients(args):
-    if args.file:
+    if getattr(args, 'file', None):
         manifest = CTLDepotManifest(None, -1, args.file.read())
         yield None, None, [manifest]
     else:
