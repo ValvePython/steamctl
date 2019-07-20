@@ -13,7 +13,7 @@ with open(path.join(here, 'steamctl/__init__.py'), encoding='utf-8') as f:
     __author__ = f.readline().split('"')[1]
 
 install_requires = [
-    'steam~=1.0.0a2',
+    'steam~=1.0.0a3',
     'appdirs',
     'argcomplete',
     'tqdm',
@@ -35,6 +35,7 @@ setup(
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
