@@ -190,7 +190,7 @@ def cmd_authenticator_remove(args):
 def cmd_authenticator_list(args):
     rows = []
 
-    for secrets_file in UserDataDirectory('authenticator').list_files('*.json'):
+    for secrets_file in UserDataDirectory('authenticator').iter_files('*.json'):
         secrets = secrets_file.read_json()
         rows.append([
             secrets['account_name'],

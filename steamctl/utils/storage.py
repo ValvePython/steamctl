@@ -110,14 +110,14 @@ class DirectoryBase(object):
     def exists(self):
         return os.path.exists(self.path)
 
-    def list_files(self, pattern=None):
+    def iter_files(self, pattern=None):
         if not os.path.exists(self.path):
-            return []
+            return
 
         for root, dirs, files in os.walk(self.path):
             if pattern:
                 files =  fnmatch.filter(files, pattern)
-            return [self._file_type(os.path.join(self.path, filename)) for filename in files]
+            yield from (self._file_type(os.path.join(self.path, filename)) for filename in files)
 
 class UserDataDirectory(DirectoryBase):
     _root_path = _appdirs.user_data_dir

@@ -38,7 +38,7 @@ def cmd_parser(cp):
 
     def account_autocomplete(prefix, parsed_args, **kwargs):
         return [userfile.filename[:-5]
-                for userfile in UserDataDirectory('authenticator').list_files('*.json')]
+                for userfile in UserDataDirectory('authenticator').iter_files('*.json')]
 
     scp = sub_cp.add_parser("code", help="Generate auth code")
     scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete

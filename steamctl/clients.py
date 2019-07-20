@@ -159,7 +159,7 @@ class CachingCDNClient(CDNClient):
             if change_number == 0 or changed_apps:
                 self._LOG.debug("Checking for outdated cached appinfo files")
 
-                for appinfo_file in UserCacheDirectory('appinfo').list_files('*.json'):
+                for appinfo_file in UserCacheDirectory('appinfo').iter_files('*.json'):
                     app_id = int(appinfo_file.filename[:-5])
 
                     if change_number == 0 or app_id in changed_apps:
