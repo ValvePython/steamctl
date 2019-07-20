@@ -62,6 +62,9 @@ def init_clients(args):
             if args.app not in cdn.licensed_app_ids:
                 raise SteamError("No license available for App ID: %s" % args.app, EResult.AccessDenied)
 
+            print("Checking change list")
+            cdn.check_for_changes()
+
             def branch_filter(depot_id, info):
                 if args.depot is not None:
                     if args.depot != depot_id:

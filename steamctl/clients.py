@@ -10,18 +10,21 @@ from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile
 from steam.exceptions import SteamError
 
 from steamctl.utils.format import fmt_size
-from steamctl.utils.storage import UserCacheFile, UserDataFile, UserDataDirectory, ensure_dir, sanitizerelpath
+from steamctl.utils.storage import (UserCacheFile, UserDataFile,
+                                    UserCacheDirectory, UserDataDirectory,
+                                    ensure_dir, sanitizerelpath
+                                    )
 
 cred_dir = UserDataDirectory('client')
 
 class CachingSteamClient(SteamClient):
     credential_location = cred_dir.path
-    _LOG = logging.getLogger('CachingSteamClient')
 
     def __init__(self, *args, **kwargs):
         if not cred_dir.exists():
             cred_dir.mkdir()
         SteamClient.__init__(self, *args, **kwargs)
+        _LOG = logging.getLogger('CachingSteamClient')
         self._bootstrap_cm_list_from_file()
 
     def _handle_login_key(self, message):
@@ -130,6 +133,53 @@ class CachingCDNClient(CDNClient):
                }
 
         UserDataFile('depot_keys.json').write_json(out)
+
+    def check_for_changes(self):
+        changefile = UserCacheFile('last_change_number')
+        change_number = 0
+
+        if changefile.exists():
+            try:
+                change_number = int(changefile.read_full())
+            except:
+                changefile.remove()
+
+        self._LOG.debug("Checking PICS for app changes")
+        resp = self.steam.get_changes_since(change_number, True, False)
+
+        if resp.force_full_app_update:
+            change_number = 0
+
+        if resp.current_change_number != change_number:
+            with changefile.open('w') as fp:
+                fp.write(str(resp.current_change_number))
+
+            changed_apps = set((entry.appid for entry in resp.app_changes))
+
+            if change_number == 0 or changed_apps:
+                self._LOG.debug("Checking for outdated cached appinfo files")
+
+                for appinfo_file in UserCacheDirectory('appinfo').list_files('*.json'):
+                    app_id = int(appinfo_file.filename[:-5])
+
+                    if change_number == 0 or app_id in changed_apps:
+                        appinfo_file.remove()
+
+    def get_app_depot_info(self, app_id):
+        if app_id not in self.app_depots:
+            cached_appinfo = UserCacheFile("appinfo/{}.json".format(app_id))
+            appinfo = None
+
+            if cached_appinfo.exists():
+                appinfo = cached_appinfo.read_json()
+
+            if not appinfo:
+                appinfo = self.steam.get_product_info([app_id])['apps'][app_id]
+                cached_appinfo.write_json(appinfo)
+
+            self.app_depots[app_id] = appinfo['depots']
+
+        return self.app_depots[app_id]
 
     def get_cached_manifest(self, app_id, depot_id, manifest_gid):
         key = (app_id, depot_id, manifest_gid)
