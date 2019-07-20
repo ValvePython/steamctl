@@ -44,7 +44,7 @@ def cmd_parser(cp):
 
     scp_i = sub_cp.add_parser("info", help="View info about a depot(s)")
     scp_i.add_argument('--cell_id', type=int, help='Cell ID to use for download')
-    scp_i.add_argument('-os', choices=['any', 'win', 'win64', 'linux', 'linux64', 'macos'],
+    scp_i.add_argument('-os', choices=['any', 'windows', 'windows64', 'linux', 'linux64', 'macos'],
                        default='any',
                        help='Operating system (Default: any)')
     scp_i.add_argument('-f', '--file', type=argparse.FileType('rb'), nargs='?', help='Path to a manifest file')
@@ -55,7 +55,7 @@ def cmd_parser(cp):
 
     scp_l = sub_cp.add_parser("list", help="List files from depot(s)")
     scp_l.add_argument('--cell_id', type=int, help='Cell ID to use for download')
-    scp_l.add_argument('-os', choices=['any', 'win', 'win64', 'linux', 'linux64', 'macos'],
+    scp_l.add_argument('-os', choices=['any', 'windows', 'windows64', 'linux', 'linux64', 'macos'],
                        default='any',
                        help='Operating system (Default: any)')
     scp_l.add_argument('-f', '--file', type=argparse.FileType('rb'), nargs='?', help='Path to a manifest file')
@@ -70,7 +70,7 @@ def cmd_parser(cp):
 
     scp_dl = sub_cp.add_parser("download", help="Download depot files")
     scp_dl.add_argument('--cell_id', type=int, help='Cell ID to use for download')
-    scp_dl.add_argument('-os', choices=['any', 'win', 'win64', 'linux', 'linux64', 'macos'],
+    scp_dl.add_argument('-os', choices=['any', 'windows', 'windows64', 'linux', 'linux64', 'macos'],
                         default='any',
                         help='Operating system (Default: any)')
     scp_dl.add_argument('-o', '--output', type=str, default='', help='Path to directory for the downloaded files (default: cwd)')
