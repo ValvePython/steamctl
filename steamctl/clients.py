@@ -172,8 +172,9 @@ class CachingCDNClient(CDNClient):
         if key not in self.manifests:
             manifest = CDNClient.get_manifest(self, app_id, depot_id, manifest_gid, decrypt)
 
-            # cache the manifest
-            with cached_manifest.open('wb') as fp:
-                fp.write(manifest.serialize(compress=False))
+            # cache the manifest, only if its decrypted
+            if not manifest.filenames_encrypted:
+                with cached_manifest.open('wb') as fp:
+                    fp.write(manifest.serialize(compress=False))
 
         return self.manifests[key]

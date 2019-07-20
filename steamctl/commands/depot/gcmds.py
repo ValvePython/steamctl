@@ -59,6 +59,9 @@ def init_clients(args):
             print("Checking licenses")
             cdn.load_licenses()
 
+            if args.app not in cdn.licensed_app_ids:
+                raise SteamError("No license available for App ID: %s" % args.app, EResult.AccessDenied)
+
             def branch_filter(depot_id, info):
                 if args.depot is not None:
                     if args.depot != depot_id:
@@ -80,7 +83,19 @@ def init_clients(args):
                 return True
 
             print("Getting manifests for 'public' branch")
-            manifests = cdn.get_manifests(args.app, filter_func=branch_filter)
+
+            manifests = []
+            for manifest in cdn.get_manifests(args.app, filter_func=branch_filter, decrypt=False):
+                if manifest.depot_id not in cdn.licensed_depot_ids:
+                    print("No license for depot: %r" % manifest)
+                    continue
+                if manifest.filenames_encrypted:
+                    try:
+                        manifest.decrypt_filenames(self.get_depot_key(manifest.app_id, manifest.depot_id))
+                    except Exception as exp:
+                        print("Failed to decrypt manifest: %s" % str(exp))
+                        continue
+                manifests.append(manifest)
 
         _LOG.debug("Got manifests: %r", manifests)
 
