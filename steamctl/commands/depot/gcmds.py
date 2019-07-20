@@ -23,7 +23,7 @@ from steamctl.commands.webapi import get_webapi_key
 
 webapi._make_requests_session = make_requests_session
 
-_LOG = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 @contextmanager
 def init_clients(args):
@@ -42,9 +42,9 @@ def init_clients(args):
             result = s.login_from_args(args)
 
             if result == EResult.OK:
-                print("Login to Steam successful")
+                LOG.info("Login to Steam successful")
             else:
-                print("Failed to login: %r" % result)
+                LOG.error("Failed to login: %r" % result)
                 return 1  # error
 
         if args.app and args.depot and args.manifest:
@@ -56,13 +56,13 @@ def init_clients(args):
                 else:
                     raise
         else:
-            print("Checking licenses")
+            LOG.info("Checking licenses")
             cdn.load_licenses()
 
             if args.app not in cdn.licensed_app_ids:
                 raise SteamError("No license available for App ID: %s" % args.app, EResult.AccessDenied)
 
-            print("Checking change list")
+            LOG.info("Checking change list")
             cdn.check_for_changes()
 
             def branch_filter(depot_id, info):
@@ -85,22 +85,22 @@ def init_clients(args):
 
                 return True
 
-            print("Getting manifests for 'public' branch")
+            LOG.info("Getting manifests for 'public' branch")
 
             manifests = []
             for manifest in cdn.get_manifests(args.app, filter_func=branch_filter, decrypt=False):
                 if manifest.depot_id not in cdn.licensed_depot_ids:
-                    print("No license for depot: %r" % manifest)
+                    LOG.error("No license for depot: %r" % manifest)
                     continue
                 if manifest.filenames_encrypted:
                     try:
                         manifest.decrypt_filenames(cdn.get_depot_key(manifest.app_id, manifest.depot_id))
                     except Exception as exp:
-                        print("Failed to decrypt manifest: %s" % str(exp))
+                        LOG.error("Failed to decrypt manifest: %s" % str(exp))
                         continue
                 manifests.append(manifest)
 
-        _LOG.debug("Got manifests: %r", manifests)
+        LOG.debug("Got manifests: %r", manifests)
 
         yield s, cdn, manifests
 
@@ -138,7 +138,7 @@ def cmd_depot_info(args):
                         print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
 
     except SteamError as exp:
-        print(str(exp))
+        LOG.error(str(exp))
         return 1  # error
 
 def cmd_depot_list(args):
@@ -146,7 +146,7 @@ def cmd_depot_list(args):
         with init_clients(args) as (s, cdn, manifests):
             for manifest in manifests:
                 if manifest.filenames_encrypted:
-                    print("Manifest filenames are encrypted")
+                    LOG.error("Manifest filenames are encrypted")
                     continue
 
                 for mapping in manifest.payload.mappings:
@@ -172,7 +172,7 @@ def cmd_depot_list(args):
                     else:
                         print(filepath)
     except SteamError as exp:
-        print(str(exp))
+        LOG.error(str(exp))
         return 1  # error
 
 def cmd_depot_download(args):
@@ -212,7 +212,7 @@ def cmd_depot_download(args):
             tasks = GPool(4)
 
             for manifest in manifests:
-                pbar.write("Processing (%s) '%s' ..." % (manifest.gid, manifest.name))
+                LOG.info("Processing (%s) '%s' ..." % (manifest.gid, manifest.name))
 
                 for depotfile in manifest:
                     if not depotfile.is_file:
@@ -235,13 +235,15 @@ def cmd_depot_download(args):
             gevent.sleep(0.5)
     except KeyboardInterrupt:
         pbar.close()
-        pbar.write("Download canceled")
+        LOG.info("Download canceled")
         return 1  # error
     except SteamError as exp:
         pbar.close()
         pbar.write(str(exp))
         return 1  # error
     else:
+        pbar.close()
         if not args.no_progress:
-            print('\n')
-        print('Download complete')
+            pbar2.close()
+            pbar2.write('\n')
+        LOG.info('Download complete')

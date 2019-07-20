@@ -25,7 +25,7 @@ def main():
     args, unknown_args = parser.parse_known_args()
 
     logging.basicConfig(
-        format='[%(levelname)s] %(name)s: %(message)s',
+        format='[%(levelname)s] %(name)s: %(message)s' if args.log_level == 'debug' else '[%(levelname)s] %(message)s',
         level=100 if args.log_level == 'quiet' else getattr(logging, args.log_level.upper())
         )
 

@@ -16,18 +16,24 @@ class TQDMHandler(logging.Handler):
 
 class tqdm(_tqdm):
     _xclosed = False
+    _xloghandler = None
+    _hooked = False
 
     def __init__(self, *args, **kwargs):
         _tqdm.__init__(self, *args, **kwargs)
-        self._xloghandler = TQDMHandler(self)
 
-        log = logging.getLogger()
-        self._xoldhandler = log.handlers.pop()
-        self._xloghandler.level = self._xoldhandler.level
-        self._xloghandler.formatter = self._xoldhandler.formatter
-        log.addHandler(self._xloghandler)
+        if not tqdm._hooked:
+            tqdm._hooked = True
 
-        self._xrootlog = log
+            self._xloghandler = TQDMHandler(self)
+
+            log = logging.getLogger()
+            self._xoldhandler = log.handlers.pop()
+            self._xloghandler.level = self._xoldhandler.level
+            self._xloghandler.formatter = self._xoldhandler.formatter
+            log.addHandler(self._xloghandler)
+
+            self._xrootlog = log
 
     def write(self, s, file=sys.stdout):
         super().write(s, file)
@@ -35,8 +41,10 @@ class tqdm(_tqdm):
     def close(self):
         _xclosed = True
         _tqdm.close(self)
-        self._xrootlog.removeHandler(self._xloghandler)
-        self._xrootlog.addHandler(self._xoldhandler)
+
+        if self._xloghandler:
+            self._xrootlog.removeHandler(self._xloghandler)
+            self._xrootlog.addHandler(self._xoldhandler)
 
     def gevent_refresh_loop(self):
         from gevent import sleep

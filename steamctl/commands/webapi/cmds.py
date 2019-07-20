@@ -9,7 +9,7 @@ from steamctl.commands.webapi import get_webapi_key
 
 webapi._make_requests_session = make_requests_session
 
-_LOG = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 def cmd_webapi_set(args):
     keyfile = UserDataFile('apikey.txt', 'w')
@@ -41,9 +41,9 @@ def cmd_webapi_list(args):
             interfaces = resp['apilist']['interfaces']
             UserCacheFile('webapi_interfaces.json').write_json(interfaces)
     except Exception as exp:
-        _LOG.error("GetSupportedAPIList failed: %s", str(exp))
+        LOG.error("GetSupportedAPIList failed: %s", str(exp))
         if getattr(exp, 'response', None):
-            _LOG.error("Response body: %s", exp.response.text)
+            LOG.error("Response body: %s", exp.response.text)
         return 1  # error
 
     if args.format != 'text':
@@ -90,7 +90,7 @@ def cmd_webapi_call(args):
     try:
         params = {k: (json.loads(v) if v[0:1] == '[' else v) for k, v in args.params}
     except Exception as exp:
-        _LOG.error("Error parsing params: %s", str(exp))
+        LOG.error("Error parsing params: %s", str(exp))
         return 1  # error
 
     apicall = webapi.get
@@ -134,9 +134,9 @@ def cmd_webapi_call(args):
         interface, method = args.endpoint.split('.', 1)
         resp = apicall(interface, method, version,  params=params)
     except Exception as exp:
-        _LOG.error("%s failed: %s", args.endpoint, str(exp))
+        LOG.error("%s failed: %s", args.endpoint, str(exp))
         if getattr(exp, 'response', None):
-            _LOG.error("Response body: %s", exp.response.text)
+            LOG.error("Response body: %s", exp.response.text)
         return 1  # error
 
     # by default we print json, other formats are shown as returned from api

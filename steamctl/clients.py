@@ -46,11 +46,11 @@ class CachingSteamClient(SteamClient):
                 args.user = last.read_full()
 
         if args.anonymous or not args.user:
-            print("Attempting anonymous login")
+            self._LOG.info("Attempting anonymous login")
             return self.anonymous_login()
 
         if args.user:
-            print("Attempting login as: %s" % args.user)
+            self._LOG.info("Attempting login as: %s" % args.user)
             self.username = args.user
 
             userkey =  UserDataFile('client/%s.key' % self.username)
@@ -59,7 +59,7 @@ class CachingSteamClient(SteamClient):
                 result = self.relogin()
 
                 if result == EResult.InvalidPassword:
-                    print("Remembered login has expired")
+                    self._LOG.info("Remembered login has expired")
                     userkey.remove()
 
             if not self.logged_on:
@@ -69,6 +69,8 @@ class CachingSteamClient(SteamClient):
 
 
 class CTLDepotFile(CDNDepotFile):
+    _LOG = logging.getLogger('CTLDepotFile')
+
     def download_to(self, target, no_make_dirs=False, pbar=None):
         relpath = sanitizerelpath(self.filename)
 
@@ -83,12 +85,11 @@ class CTLDepotFile(CDNDepotFile):
         checksum = self.file_mapping.sha_content.hex()
 
         with open(filepath, 'wb') as fp:
-            if pbar:
-                pbar.write('Downloading to {}  ({}, {})'.format(
-                    relpath,
-                    fmt_size(self.size),
-                    checksum
-                    ))
+            self._LOG.info('Downloading to {}  ({}, {})'.format(
+                               relpath,
+                               fmt_size(self.size),
+                               checksum
+                               ))
 
             for chunk in self.chunks:
                 data = self.manifest.cdn_client.get_chunk(
