@@ -192,7 +192,7 @@ class CachingCDNClient(CDNClient):
 
         # we have a cached manifest file, load it
         if cached_manifest.exists():
-            with cached_manifest.open('rb') as fp:
+            with cached_manifest.open('r+b') as fp:
                 try:
                     manifest = self.DepotManifestClass(self, app_id, fp.read())
                 except Exception as exp:
@@ -201,6 +201,14 @@ class CachingCDNClient(CDNClient):
                     # if its not empty, load it
                     if manifest.gid > 0:
                         self.manifests[key] = manifest
+
+                        # update cached file if we have depot key for it
+                        if manifest.filenames_encrypted and manifest.depot_id in self.depot_keys:
+                            manifest.decrypt_filenames(self.depot_keys[manifest.depot_id])
+                            fp.seek(0)
+                            fp.write(manifest.serialize(compress=False))
+                            fp.truncate()
+
                         return manifest
 
             # empty manifest files shouldn't exist, handle it gracefully by removing the file
@@ -222,9 +230,13 @@ class CachingCDNClient(CDNClient):
         if key not in self.manifests:
             manifest = CDNClient.get_manifest(self, app_id, depot_id, manifest_gid, decrypt)
 
-            # cache the manifest, only if its decrypted
-            if not manifest.filenames_encrypted:
-                with cached_manifest.open('wb') as fp:
-                    fp.write(manifest.serialize(compress=False))
+            # cache the manifest
+            with cached_manifest.open('wb') as fp:
+                # if we have the key decrypt the manifest before caching
+                if manifest.filenames_encrypted and manifest.depot_id in self.depot_keys:
+                    manifest = self.DepotManifestClass(self, manifest.app_id, manifest.serialize(compress=False))
+                    manifest.decrypt_filenames(self.depot_keys[manifest.depot_id])
+
+                fp.write(manifest.serialize(compress=False))
 
         return self.manifests[key]

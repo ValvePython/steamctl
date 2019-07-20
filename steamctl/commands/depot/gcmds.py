@@ -94,7 +94,7 @@ def init_clients(args):
                     continue
                 if manifest.filenames_encrypted:
                     try:
-                        manifest.decrypt_filenames(self.get_depot_key(manifest.app_id, manifest.depot_id))
+                        manifest.decrypt_filenames(cdn.get_depot_key(manifest.app_id, manifest.depot_id))
                     except Exception as exp:
                         print("Failed to decrypt manifest: %s" % str(exp))
                         continue
@@ -145,6 +145,10 @@ def cmd_depot_list(args):
     try:
         with init_clients(args) as (s, cdn, manifests):
             for manifest in manifests:
+                if manifest.filenames_encrypted:
+                    print("Manifest filenames are encrypted")
+                    continue
+
                 for mapping in manifest.payload.mappings:
                     # ignore symlinks and directorys
                     if mapping.linktarget or mapping.flags & EDepotFileFlag.Directory:
