@@ -141,7 +141,7 @@ def cmd_webapi_call(args):
 
     # by default we print json, other formats are shown as returned from api
     if args.format == 'json':
-        json.dump(json.loads(resp), sys.stdout, indent=4, sort_keys=True)
+        json.dump(json.loads(resp.rstrip('\n\t\x00 ')), sys.stdout, indent=4, sort_keys=True)
         print('')
     else:
         print(resp)
