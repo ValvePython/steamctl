@@ -18,6 +18,7 @@ def cmd_workshop_search(args):
         return 1  #error
 
     maxpages, _ = divmod(args.numresults, 100)
+    firstpage = True
 
     rows = []
     names = {}
@@ -44,7 +45,16 @@ def cmd_workshop_search(args):
         try:
             results = webapi.get('IPublishedFileService', 'QueryFiles',
                                  params=params,
-                                 )['response']['publishedfiledetails']
+                                 )['response'].get('publishedfiledetails', [])
+
+            if not results:
+                if firstpage:
+                    _LOG.error("No results found")
+                    return 1  # error
+                else:
+                    break
+
+            firstpage = False
 
             users =  webapi.get('ISteamUser', 'GetPlayerSummaries', 2,
                                 params={
