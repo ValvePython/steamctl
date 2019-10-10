@@ -42,6 +42,12 @@ def cmd_parser(cp):
     scp_q.add_argument('search_text', nargs='+', metavar='search_text', type=str, help='Text to search in the workshop')
     scp_q.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_search')
 
+    scp_i = sub_cp.add_parser("info", help="Get all details for a workshop item")
+    scp_i.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_i.add_argument('-a', '--appid', type=int, help='Filter by AppID')
+    scp_i.add_argument('id', metavar='id', type=str, help='Workshop ID')
+    scp_i.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_info')
+
     scp_dl = sub_cp.add_parser("download", help="Download a workshop item")
     scp_dl.add_argument('--apikey', type=str, help='WebAPI key to use')
     scp_dl.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')

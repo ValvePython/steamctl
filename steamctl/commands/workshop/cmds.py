@@ -1,3 +1,4 @@
+import json
 import logging
 from steam import webapi
 from steam.enums import EResult
@@ -95,3 +96,40 @@ def cmd_workshop_search(args):
     print_table(rows,
                 ['ID', 'Title', 'Creator', 'AppID', 'App Name', '>Views', '>Favs', '>Size', 'DL', 'Tags'],
                 )
+
+def cmd_workshop_info(args):
+    apikey = args.apikey or get_webapi_key()
+
+    if not apikey:
+        _LOG.error("No WebAPI key set. See: steamctl webapi -h")
+        return 1  #error
+
+    params = {
+        'key': apikey,
+        'publishedfileids': [args.id],
+        'includetags': 1,
+        'includeadditionalpreviews': 1,
+        'includechildren': 1,
+        'includekvtags': 1,
+        'includevotes': 1,
+        'includeforsaledata': 1,
+        'includemetadata': 1,
+        'return_playtime_stats': 1,
+        'strip_description_bbcode': 1,
+        }
+
+    try:
+        result = webapi.get('IPublishedFileService', 'GetDetails',
+                             params=params,
+                             )['response']['publishedfiledetails'][0]
+    except Exception as exp:
+        _LOG.error("Query failed: %s", str(exp))
+        if getattr(exp, 'response', None):
+            _LOG.error("Response body: %s", exp.response.text)
+        return 1  # error
+
+    if result['result'] != EResult.OK:
+        _LOG.error("Query result: %r", EResult(result['result']))
+        return 1 # error
+
+    print(json.dumps(result, indent=2))
