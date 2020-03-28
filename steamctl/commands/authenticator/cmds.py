@@ -266,10 +266,10 @@ def cmd_authenticator_qrcode(args):
       ('0', '1'): '▄',
     }
 
-    uri = 'otpauth://totp/Steam:{user}?secret={secret}&issuer=steamctl.py&digits=5'.format(user=secrets['account_name'],
-                                                                                           secret=b32encode(b64decode(secrets['shared_secret'])).decode('ascii'),
-                                                                                           )
-    qrlines = pyqrcode.create(uri).text(1).split('\n')[:-1]
+    uri = 'otpauth://totp/steamctl:{user}?secret={secret}&issuer=Steam&digits=5'.format(user=secrets['account_name'],
+                                                                                        secret=b32encode(b64decode(secrets['shared_secret'])).decode('ascii'),
+                                                                                        )
+    qrlines = pyqrcode.create(uri, error='M').text(1).split('\n')[:-1]
 
     print("Scan the QR code with Aegis Authenticator")
     print("!!! Change the type from TOTP to Steam in the app !!!")
