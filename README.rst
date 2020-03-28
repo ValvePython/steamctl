@@ -54,6 +54,11 @@ Command list
 Previews
 --------
 
+``steamctl authenticator`` (no root required)
+
+.. image:: https://raw.githubusercontent.com/ValvePython/steamctl/master/preview_authenticator.jpg
+    :alt: preview: steamctl authenticator
+
 ``steamctl hlmaster``
 
 .. image:: https://asciinema.org/a/253275.png
