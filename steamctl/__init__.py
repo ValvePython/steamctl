@@ -1,4 +1,4 @@
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 __author__ = "Rossen Georgiev"
 __appname__ = "steamctl"
 

@@ -1,4 +1,4 @@
-steam~=1.0.0a4
+steam~=1.0.0a6
 appdirs
 argcomplete
 tqdm
