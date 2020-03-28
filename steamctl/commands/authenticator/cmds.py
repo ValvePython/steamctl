@@ -68,8 +68,8 @@ def cmd_authenticator_add(args):
     account = args.account.lower().strip()
     secrets_file = UserDataFile('authenticator/{}.json'.format(account))
 
-    if secrets_file.exists():
-        print("There is already an authenticator for that account")
+    if secrets_file.exists() and not args.force:
+        print("There is already an authenticator for that account. Use --force to overwrite")
         return 1  # error
 
     print("To add an authenticator, first we need to login to Steam")
@@ -124,21 +124,54 @@ def cmd_authenticator_add(args):
 
     secrets_file.write_json(sa.secrets)
 
-    print("Authenticator secrets obtained. SMS code for finalization sent.")
+    # Setup Steam app in conjuction
+    if pmt_confirmation("Do you want to use Steam app too?", default_yes=False):
+        print("Great! Go and setup Steam Guard in your app.")
+        print("Once completed, generate a code and enter it below.")
 
-    while True:
-        code = pmt_input("Enter SMS code:", regex='^[0-9]+$')
-        try:
-            sa.finalize(code)
-        except SteamAuthenticatorError as exp:
-            print("Finalization error: %s", exp)
-            continue
-        else:
-            break
+        showed_fail_info = False
+        fail_counter = 0
+
+        while True:
+            code = pmt_input("Steam Guard code:", regex='^[23456789BCDFGHJKMNPQRTVWXYbcdfghjkmnpqrtvwxy]{5}$')
+
+            # code match
+            if sa.get_code() == code.upper():
+                break # success
+            # code do not match
+            else:
+                fail_counter += 1
+
+                if fail_counter >= 3 and not showed_fail_info:
+                    showed_fail_info = True
+                    print("The codes do not match. This can be caused by:")
+                    print("* The code was not entered correctly")
+                    print("* Your system time is not synchronized")
+                    print("* Steam has made changes to their backend")
+
+                if not pmt_confirmation("Code mismatch. Try again?", default_yes=True):
+                    _LOG.debug("Removing secrets file")
+                    secrets_file.remove()
+                    return 1 # failed, exit
+
+    # only setup steamctl 2fa
+    else:
+        print("Authenticator secrets obtained. SMS code for finalization sent.")
+
+        while True:
+            code = pmt_input("Enter SMS code:", regex='^[0-9]+$')
+            try:
+                sa.finalize(code)
+            except SteamAuthenticatorError as exp:
+                print("Finalization error: %s", exp)
+                continue
+            else:
+                break
 
     # finish line
     print("Authenticator added successfully!")
     print("To get a code run: {} authenticator code {}".format(__appname__, account))
+    print("Or for QRcode run: {} authenticator qrcode {}".format(__appname__, account))
 
 
 def cmd_authenticator_remove(args):

@@ -20,6 +20,9 @@ def cmd_parser(cp):
                                )
 
     scp = sub_cp.add_parser("add", help="Add authentictor to a Steam account")
+    scp.add_argument('--force', action='store_true',
+                     help='Overwrite existing authenticator.'
+                     )
     scp.add_argument('account', type=str, help='Account name')
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_add')
 
