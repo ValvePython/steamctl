@@ -18,6 +18,7 @@ install_requires = [
     'argcomplete',
     'tqdm',
     'arrow',
+    'pyqrcode',
 ]
 
 setup(

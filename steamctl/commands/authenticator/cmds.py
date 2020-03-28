@@ -215,3 +215,34 @@ def cmd_authenticator_code(args):
 
     print(SteamAuthenticator(secrets).get_code())
 
+def cmd_authenticator_qrcode(args):
+    account = args.account.lower().strip()
+    secrets = UserDataFile('authenticator/{}.json'.format(account)).read_json()
+
+    if not secrets:
+        print("No authenticator for %r" % account)
+        return 1  # error
+
+    import pyqrcode
+    from base64 import b64decode, b32encode
+
+    charmap = {
+      ('1', '1'): '█',
+      ('0', '0'): ' ',
+      ('1', '0'): '▀',
+      ('0', '1'): '▄',
+    }
+
+    uri = 'otpauth://totp/Steam:{user}?secret={secret}&issuer=steamctl.py&digits=5'.format(user=secrets['account_name'],
+                                                                                           secret=b32encode(b64decode(secrets['shared_secret'])).decode('ascii'),
+                                                                                           )
+    qrlines = pyqrcode.create(uri).text(1).split('\n')[:-1]
+
+    print("Scan the QR code with Aegis Authenticator")
+    print("!!! Change the type from TOTP to Steam in the app !!!")
+
+    for y in range(0, len(qrlines), 2):
+        for x in range(0, len(qrlines[y])):
+            print(charmap[(qrlines[y][x], '0' if y+1 >= len(qrlines) else qrlines[y+1][x])], end='')
+        print()
+

@@ -3,3 +3,4 @@ appdirs
 argcomplete
 tqdm
 arrow
+pyqrcode

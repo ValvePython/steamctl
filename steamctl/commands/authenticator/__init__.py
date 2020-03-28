@@ -44,3 +44,7 @@ def cmd_parser(cp):
     scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_code')
 
+    scp = sub_cp.add_parser("qrcode", help="Generate QR code")
+    scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete
+    scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_qrcode')
+
