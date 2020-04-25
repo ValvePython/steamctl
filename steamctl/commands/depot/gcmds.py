@@ -31,6 +31,9 @@ def init_clients(args):
         manifest = CTLDepotManifest(None, -1, args.file.read())
         yield None, None, [manifest]
     else:
+        if not args.app:
+            raise SteamError("No app id specified")
+
         s = CachingSteamClient()
         if args.cell_id is not None:
             s.cell_id = args.cell_id
@@ -44,8 +47,7 @@ def init_clients(args):
             if result == EResult.OK:
                 LOG.info("Login to Steam successful")
             else:
-                LOG.error("Failed to login: %r" % result)
-                return 1  # error
+                raise SteamError("Failed to login: %r" % result)
 
         if args.app and args.depot and args.manifest:
             try:
