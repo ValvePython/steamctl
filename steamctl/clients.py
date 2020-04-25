@@ -191,6 +191,17 @@ class CachingCDNClient(CDNClient):
                     if change_number == 0 or app_id in changed_apps:
                         appinfo_file.remove()
 
+    def get_app_access_token(self, app_id):
+        tokens = self.steam.get_access_tokens([app_id])
+
+        if not tokens:
+            self._LOG.debug("Access token request time out")
+            return
+
+        token = tokens['apps'][app_id]
+        self._LOG.debug("Got access token %s for app %s", repr(token), app_id)
+        return token
+
     def get_app_depot_info(self, app_id):
         if app_id not in self.app_depots:
             cached_appinfo = UserCacheFile("appinfo/{}.json".format(app_id))
@@ -200,10 +211,20 @@ class CachingCDNClient(CDNClient):
                 appinfo = cached_appinfo.read_json()
 
             if not appinfo:
-                appinfo = self.steam.get_product_info([app_id])['apps'][app_id]
+                app_req = {'appid': app_id}
+                token = self.get_app_access_token(app_id)
+
+                if token:
+                    app_req['access_token'] = token
+
+                appinfo = self.steam.get_product_info([app_req])['apps'][app_id]
+
+                if appinfo['_missing_token']:
+                    raise SteamError("No access token available")
+
                 cached_appinfo.write_json(appinfo)
 
-            self.app_depots[app_id] = appinfo['depots']
+            self.app_depots[app_id] = appinfo.get('depots', {})
 
         return self.app_depots[app_id]
 
