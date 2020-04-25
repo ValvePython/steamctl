@@ -39,31 +39,56 @@ class CachingSteamClient(SteamClient):
     def login_from_args(self, args, print_status=True):
         result = None
 
-        if not args.anonymous and not args.user:
-            last = UserDataFile('client/lastuser')
-
-            if last.exists():
-                args.user = last.read_full()
-
-        if args.anonymous or not args.user:
+        # anonymous login
+        if args.anonymous and not args.user:
             self._LOG.info("Attempting anonymous login")
             return self.anonymous_login()
 
-        if args.user:
-            self._LOG.info("Attempting login as: %s" % args.user)
-            self.username = args.user
+        # user login
+        user = args.user
+        lastFile = UserDataFile('client/lastuser')
 
+        # check for previously used user
+        if not user and lastFile.exists():
+            user = lastFile.read_full()
+
+            if user:
+                self._LOG.info("Reusing previous username: %s", user)
+                self._LOG.info("Hint: use 'steamctl --user <username> ...' to change")
+            else:
+                self._LOG.debug("lastuser file is empty?")
+                lastFile.remove()
+
+        if user:
+            # attempt login
+            self.username = user
+
+            # check for userkey and login without a prompt
             userkey =  UserDataFile('client/%s.key' % self.username)
             if userkey.exists():
+                self._LOG.info("Attempting login with remembered credentials")
                 self.login_key = userkey.read_full()
                 result = self.relogin()
 
                 if result == EResult.InvalidPassword:
-                    self._LOG.info("Remembered login has expired")
+                    self._LOG.info("Remembered credentials have expired")
                     userkey.remove()
+                else:
+                    return result
 
-            if not self.logged_on:
-                result = self.cli_login(self.user)
+            self.sleep(0.1)
+
+        # attempt manual cli login
+        if not self.logged_on:
+            if self.username:
+                self._LOG.info("Enter credentials for: %s", self.username)
+            else:
+                self._LOG.info("Enter Steam login")
+
+            result = self.cli_login(self.username)
+
+        if not lastFile.exists() or lastFile.read_full() != self.username:
+            lastFile.write_full(self.username)
 
         return result
 

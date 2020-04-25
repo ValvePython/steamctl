@@ -63,6 +63,10 @@ class FileBase(object):
             with self.open('r') as fp:
                 return fp.read()
 
+    def write_full(self, data):
+        with self.open('w') as fp:
+            fp.write(data)
+
     def read_json(self):
         if self.exists():
             with self.open('r') as fp:
