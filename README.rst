@@ -59,17 +59,30 @@ Previews
 .. image:: https://raw.githubusercontent.com/ValvePython/steamctl/master/preview_authenticator.jpg
     :alt: preview: steamctl authenticator
 
-``steamctl hlmaster``
+``steamctl depot``
 
-.. image:: https://asciinema.org/a/253275.png
-    :target: https://asciinema.org/a/253275
-    :alt: preview: steamctl hlmaster
+.. image:: https://asciinema.org/a/323966.png
+    :target: https://asciinema.org/a/323966
+    :alt: preview: steamctl depot
 
 ``steamctl workshop``
 
 .. image:: https://asciinema.org/a/253277.png
     :target: https://asciinema.org/a/253277
     :alt: preview: steamctl workshop
+
+``steamctl webapi``
+
+.. image:: https://asciinema.org/a/323976.png
+    :target: https://asciinema.org/a/323976
+    :alt: preview: steamctl workshop
+
+``steamctl hlmaster``
+
+.. image:: https://asciinema.org/a/253275.png
+    :target: https://asciinema.org/a/253275
+    :alt: preview: steamctl hlmaster
+
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/steamctl.svg?style=flat&label=latest
