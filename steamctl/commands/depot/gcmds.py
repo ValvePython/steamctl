@@ -67,7 +67,7 @@ def init_clients(args):
             LOG.info("Checking change list")
             cdn.check_for_changes()
 
-            def branch_filter(depot_id, info):
+            def depot_filter(depot_id, info):
                 if args.depot is not None:
                     if args.depot != depot_id:
                         return False
@@ -87,10 +87,13 @@ def init_clients(args):
 
                 return True
 
-            LOG.info("Getting manifests for 'public' branch")
+            branch = args.branch
+            password = args.password
+
+            LOG.info("Getting manifests for %s branch", repr(branch))
 
             manifests = []
-            for manifest in cdn.get_manifests(args.app, filter_func=branch_filter, decrypt=False):
+            for manifest in cdn.get_manifests(args.app, branch=branch, password=password, filter_func=depot_filter, decrypt=False):
                 if manifest.depot_id not in cdn.licensed_depot_ids:
                     LOG.error("No license for depot: %r" % manifest)
                     continue
