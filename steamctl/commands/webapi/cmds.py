@@ -12,14 +12,13 @@ webapi._make_requests_session = make_requests_session
 LOG = logging.getLogger(__name__)
 
 def cmd_webapi_set(args):
-    keyfile = UserDataFile('apikey.txt', 'w')
+    keyfile = UserDataFile('apikey.txt')
 
     if args.key:
-        with keyfile as fp:
-            fp.write(args.key)
+        keyfile.write_text(args.key)
 
     if keyfile.exists():
-        print("Current key:", keyfile.read_full())
+        print("Current key:", keyfile.read_text())
     else:
         print("Current key: NOT SET")
 

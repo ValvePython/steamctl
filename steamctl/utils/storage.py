@@ -58,12 +58,12 @@ class FileBase(object):
         ensure_dir(self.path, 0o700)
         return open(self.path, mode)
 
-    def read_full(self):
+    def read_text(self):
         if self.exists():
             with self.open('r') as fp:
                 return fp.read()
 
-    def write_full(self, data):
+    def write_text(self, data):
         with self.open('w') as fp:
             fp.write(data)
 

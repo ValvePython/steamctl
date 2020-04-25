@@ -50,7 +50,7 @@ class CachingSteamClient(SteamClient):
 
         # check for previously used user
         if not user and lastFile.exists():
-            user = lastFile.read_full()
+            user = lastFile.read_text()
 
             if user:
                 self._LOG.info("Reusing previous username: %s", user)
@@ -67,7 +67,7 @@ class CachingSteamClient(SteamClient):
             userkey =  UserDataFile('client/%s.key' % self.username)
             if userkey.exists():
                 self._LOG.info("Attempting login with remembered credentials")
-                self.login_key = userkey.read_full()
+                self.login_key = userkey.read_text()
                 result = self.relogin()
 
                 if result == EResult.InvalidPassword:
@@ -87,8 +87,8 @@ class CachingSteamClient(SteamClient):
 
             result = self.cli_login(self.username)
 
-        if not lastFile.exists() or lastFile.read_full() != self.username:
-            lastFile.write_full(self.username)
+        if not lastFile.exists() or lastFile.read_text() != self.username:
+            lastFile.write_text(self.username)
 
         return result
 
@@ -166,7 +166,7 @@ class CachingCDNClient(CDNClient):
 
         if changefile.exists():
             try:
-                change_number = int(changefile.read_full())
+                change_number = int(changefile.read_text())
             except:
                 changefile.remove()
 

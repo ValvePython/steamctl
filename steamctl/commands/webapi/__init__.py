@@ -6,7 +6,7 @@ from argcomplete import warn
 
 
 def get_webapi_key():
-    return UserDataFile('apikey.txt').read_full()
+    return UserDataFile('apikey.txt').read_text()
 
 epilog = """\
 Steam Web API Key:
