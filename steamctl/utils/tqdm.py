@@ -53,10 +53,12 @@ class tqdm(_tqdm):
             sleep(0.5)
 
 class fake_tqdm(object):
+    def __init__(self, *args, **kwargs):
+        self.n = 0
     def write(self, s):
         print(s)
     def update(self, n):
-        pass
+        self.n += n
     def refresh(self):
         pass
     def close(self):

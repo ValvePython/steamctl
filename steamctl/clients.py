@@ -110,7 +110,7 @@ class CTLDepotFile(CDNDepotFile):
         checksum = self.file_mapping.sha_content.hex()
 
         with open(filepath, 'wb') as fp:
-            self._LOG.info('Downloading to {}  ({}, {})'.format(
+            self._LOG.info('Downloading to {}  ({}, sha1:{})'.format(
                                relpath,
                                fmt_size(self.size),
                                checksum

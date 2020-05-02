@@ -19,6 +19,7 @@ install_requires = [
     'tqdm',
     'arrow',
     'pyqrcode',
+    'vpk>=1.3.2',
 ]
 
 setup(
