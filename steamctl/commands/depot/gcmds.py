@@ -396,8 +396,8 @@ def cmd_depot_download(args):
 
             # enable progress bar
             if not args.no_progress and sys.stderr.isatty():
-                pbar = tqdm(desc='Downloaded', mininterval=0.5, maxinterval=1, total=total_size, unit=' B', unit_scale=True)
-                pbar2 = tqdm(desc='Files     ', mininterval=0.5, maxinterval=1, total=total_files, position=1, unit=' file', unit_scale=False)
+                pbar = tqdm(desc='Data ', mininterval=0.5, maxinterval=1, total=total_size, unit='B', unit_scale=True)
+                pbar2 = tqdm(desc='Files', mininterval=0.5, maxinterval=1, total=total_files, position=1, unit=' file', unit_scale=False)
                 gevent.spawn(pbar.gevent_refresh_loop)
                 gevent.spawn(pbar2.gevent_refresh_loop)
 
