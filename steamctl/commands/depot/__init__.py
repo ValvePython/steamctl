@@ -88,6 +88,7 @@ def cmd_parser(cp):
     scp_dl.add_argument('-b', '--branch', type=str, help='Branch name', default='public')
     scp_dl.add_argument('-p', '--password', type=str, help='Branch password')
     scp_dl.add_argument('--vpk', action='store_true', help='Include files inside VPK files')
+    scp_dl.add_argument('--skip-verify', action='store_true', help='Do not verify existing files, simply redownload')
     fexcl = scp_dl.add_mutually_exclusive_group()
     fexcl.add_argument('-n', '--name', type=str, help='Wildcard for matching filepath')
     fexcl.add_argument('-re', '--regex', type=str, help='Reguar expression for matching filepath')

@@ -453,7 +453,8 @@ def cmd_depot_download(args):
                                                                           fvpk._make_meta_dict(metadata)),
                                                 args.output,
                                                 no_make_dirs=args.no_directories,
-                                                pbar=pbar)
+                                                pbar=pbar,
+                                                )
 
                                     pbar2.update(1)
 
@@ -473,7 +474,9 @@ def cmd_depot_download(args):
 
                     tasks.spawn(depotfile.download_to, args.output,
                                 no_make_dirs=args.no_directories,
-                                pbar=pbar)
+                                pbar=pbar,
+                                verify=(not args.skip_verify),
+                                )
 
                     pbar2.update(1)
 

@@ -8,6 +8,7 @@ from steam.enums import EResult
 from steam.client import SteamClient
 from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile
 from steam.exceptions import SteamError
+from steam.core.crypto import sha1_hash
 
 from steamctl.utils.format import fmt_size
 from steamctl.utils.storage import (UserCacheFile, UserDataFile,
@@ -96,7 +97,7 @@ class CachingSteamClient(SteamClient):
 class CTLDepotFile(CDNDepotFile):
     _LOG = logging.getLogger('CTLDepotFile')
 
-    def download_to(self, target, no_make_dirs=False, pbar=None):
+    def download_to(self, target, no_make_dirs=False, pbar=None, verify=True):
         relpath = sanitizerelpath(self.filename)
 
         if no_make_dirs:
@@ -109,14 +110,41 @@ class CTLDepotFile(CDNDepotFile):
 
         checksum = self.file_mapping.sha_content.hex()
 
-        with open(filepath, 'wb') as fp:
-            self._LOG.info('Downloading to {}  ({}, sha1:{})'.format(
+        # don't bother verifying if file doesn't already exist
+        if not os.path.exists(filepath):
+            verify = False
+
+        with open(filepath, 'r+b' if verify else 'wb') as fp:
+            fp.seek(0, 2)
+
+            # pre-allocate space
+            if fp.tell() != self.size:
+                newsize = fp.truncate(self.size)
+
+                if newsize != self.size:
+                    raise SteamError("Failed allocating space for {}".format(filepath))
+
+            self._LOG.info('{} {}  ({}, sha1:{})'.format(
+                               'Verifying' if verify else 'Downloading',
                                relpath,
                                fmt_size(self.size),
                                checksum
                                ))
 
+            fp.seek(0)
             for chunk in self.chunks:
+                # verify chunk sha hash
+                if verify:
+                    cur_data = fp.read(chunk.cb_original)
+
+                    if sha1_hash(cur_data) == chunk.sha:
+                        if pbar:
+                            pbar.update(chunk.cb_original)
+                        continue
+
+                    fp.seek(chunk.offset)  # rewind before write
+
+                # download and write chunk
                 data = self.manifest.cdn_client.get_chunk(
                                 self.manifest.app_id,
                                 self.manifest.depot_id,
@@ -126,7 +154,7 @@ class CTLDepotFile(CDNDepotFile):
                 fp.write(data)
 
                 if pbar:
-                    pbar.update(len(data))
+                    pbar.update(chunk.cb_original)
 
 class CTLDepotManifest(CDNDepotManifest):
     DepotFileClass = CTLDepotFile
