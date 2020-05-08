@@ -63,10 +63,11 @@ class ManifestFileIndex(object):
                     self._path_cache[path] = ref = (manifest, foundfile.file_mapping)
         return ref
 
-    def index(self, pattern):
+    def index(self, pattern=None, raw=True):
         for manifest in self.manifests:
             for filematch in manifest.iter_files(pattern):
-                self._path_cache[filematch.filename_raw] = (manifest, filematch.file_mapping)
+                filepath = filematch.filename_raw if raw else filematch.filename
+                self._path_cache[filepath] = (manifest, filematch.file_mapping)
 
     def file_exists(self, path):
         return self._locate_file_mapping(path) != None
@@ -497,3 +498,75 @@ def cmd_depot_download(args):
             pbar2.close()
             pbar2.write('\n')
         LOG.info('Download complete')
+
+from hashlib import sha1
+
+def calc_sha1_for_file(path):
+    checksum = sha1()
+
+    with open(path, 'rb') as fp:
+        for chunk in iter(lambda: fp.read(16384), b''):
+            checksum.update(chunk)
+
+    return checksum.digest()
+
+def cmd_depot_diff(args):
+    try:
+        with init_clients(args) as (s, cdn, manifests):
+            targetdir = args.TARGETDIR
+            fileindex = {}
+
+            for manifest in manifests:
+                LOG.debug("Scanning manifest: %r", manifest)
+                for mfile in manifest.iter_files():
+                    if not mfile.is_file:
+                        continue
+
+                    if args.name and not fnmatch(mfile.filename_raw, args.name):
+                        continue
+                    if args.regex and not re_search(args.regex, mfile.filename_raw):
+                        continue
+
+                    if args.show_extra:
+                        fileindex[mfile.filename] = mfile.file_mapping
+
+                    if args.hide_missing and args.hide_mismatch:
+                        continue
+
+                    full_filepath = os.path.join(targetdir, mfile.filename)
+                    if os.path.isfile(full_filepath):
+                        # do mismatch, checksum checking
+                        size = os.path.getsize(full_filepath)
+
+                        if size != mfile.size:
+                            print("Mismatch (size differ):", full_filepath)
+                            continue
+
+                        # valve sets the checksum for empty files to all nulls
+                        if size == 0:
+                            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                        else:
+                            chucksum = calc_sha1_for_file(full_filepath)
+
+                        if chucksum != mfile.file_mapping.sha_content:
+                            print("Mismatch (checksum differ):", full_filepath)
+
+                    elif not args.hide_missing:
+                        print("Missing file:", full_filepath)
+
+
+            # walk file system and show files not in manifest(s)
+            if args.show_extra:
+                for cdir, _, files in os.walk(targetdir):
+                    for filename in files:
+                        filepath = os.path.join(cdir, filename)
+                        rel_filepath = os.path.relpath(filepath, targetdir)
+
+                        if rel_filepath.lower() not in fileindex:
+                            print("Not in manifest:", filepath)
+
+    except KeyboardInterrupt:
+        return 1  # error
+    except SteamError as exp:
+        LOG.exception(exp)
+        return 1  # error

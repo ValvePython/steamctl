@@ -32,7 +32,8 @@ Command list
     depot               List and download from Steam depots
     |- info               View info about a depot(s)
     |- list               List files from depot(s)
-    \- download           Download depot files
+    |- download           Download depot files
+    \- diff               Compare files between manifest(s) and filesystem
 
     hlmaster            Query master server and server information
     |- query              Query HL Master for servers
