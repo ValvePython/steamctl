@@ -118,8 +118,10 @@ def init_clients(args):
     cdn = s.get_cdnclient()
 
     if getattr(args, 'file', None):
-        manifest = CTLDepotManifest(cdn, args.app or -1, args.file.read())
-        yield s, cdn, [manifest]
+        manifests = []
+        for fp in args.file:
+            manifests.append(CTLDepotManifest(cdn, args.app or -1, fp.read()))
+        yield s, cdn, manifests
     else:
         if not args.app:
             raise SteamError("No app id specified")
