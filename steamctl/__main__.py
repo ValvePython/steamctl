@@ -9,9 +9,6 @@ if sys.platform != "win32":
     from signal import signal, SIGPIPE, SIG_DFL
     signal(SIGPIPE, SIG_DFL)
 
-import gevent
-gevent.get_hub().NOT_ERROR += (KeyboardInterrupt,)
-
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
 
@@ -50,7 +47,11 @@ def main():
     _LOG.debug("Parsed args: %s", vars(args))
 
     if cmd_func:
-        rcode = cmd_func(args=args)
+        try:
+            rcode = cmd_func(args=args)
+        except KeyboardInterrupt:
+            _LOG.debug('Interrupted with KeyboardInterrupt')
+            rcode = 1
     else:
         _LOG.debug('_cmd_func attribute is missing')
         rcode = 1
@@ -59,8 +60,4 @@ def main():
         sys.exit(rcode)
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        _LOG.debug('Interrupted with KeyboardInterrupt')
-        sys.exit(1)
+    main()
