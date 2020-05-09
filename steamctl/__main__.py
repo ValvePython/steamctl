@@ -5,10 +5,6 @@ import sys
 import logging
 import argcomplete
 
-if sys.platform != "win32":
-    from signal import signal, SIGPIPE, SIG_DFL
-    signal(SIGPIPE, SIG_DFL)
-
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
 
