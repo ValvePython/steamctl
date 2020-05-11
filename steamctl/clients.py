@@ -298,18 +298,14 @@ class CachingCDNClient(CDNClient):
         key = (app_id, depot_id, manifest_gid)
         cached_manifest = UserCacheFile("manifests/{}_{}_{}".format(*key))
 
-        if key not in self.manifests:
-            self.get_cached_manifest(*key)
-
-        # if we still dont have a manifest, load it from CDN
-        if key not in self.manifests:
+        # if manifest not cached, download from CDN
+        if not self.is_manifest_cached(*key):
             manifest = CDNClient.get_manifest(self, app_id, depot_id, manifest_gid, decrypt)
 
             # cache the manifest
             with cached_manifest.open('wb') as fp:
-                # if we have the key decrypt the manifest before caching
+                # if we have the key, decrypt the manifest before caching
                 if manifest.filenames_encrypted and manifest.depot_id in self.depot_keys:
-                    manifest = self.DepotManifestClass(self, manifest.app_id, manifest.serialize(compress=False))
                     manifest.decrypt_filenames(self.depot_keys[manifest.depot_id])
 
                 fp.write(manifest.serialize(compress=False))
