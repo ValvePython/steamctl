@@ -26,6 +26,9 @@ def cmd_steamid(args):
     if s.community_url:
         lines += ["Community URL: {s.community_url}"]
 
+    if s.invite_url:
+        lines += ["Invite URL: {s.invite_url}"]
+
     lines += ["Valid: {is_valid}"]
 
     print("\n".join(lines).format(s=s,
