@@ -226,9 +226,21 @@ class CachingCDNClient(CDNClient):
             self._LOG.debug("Access token request time out")
             return
 
-        token = tokens['apps'][app_id]
-        self._LOG.debug("Got access token %s for app %s", repr(token), app_id)
-        return token
+        try:
+            token = tokens['apps'][app_id]
+        except KeyError:
+            pass
+        else:
+            self._LOG.debug("Got access token %s for app %s", repr(token), app_id)
+            return token
+
+    def has_cached_app_depot_info(self, app_id):
+        if app_id in self.app_depots:
+            return True
+        cached_appinfo = UserCacheFile("appinfo/{}.json".format(app_id))
+        if cached_appinfo.exists():
+            return True
+        return False
 
     def get_app_depot_info(self, app_id):
         if app_id not in self.app_depots:
@@ -245,7 +257,10 @@ class CachingCDNClient(CDNClient):
                 if token:
                     app_req['access_token'] = token
 
-                appinfo = self.steam.get_product_info([app_req])['apps'][app_id]
+                try:
+                    appinfo = self.steam.get_product_info([app_req])['apps'][app_id]
+                except KeyError:
+                    raise SteamError("Invalid app id")
 
                 if appinfo['_missing_token']:
                     raise SteamError("No access token available")
@@ -291,23 +306,21 @@ class CachingCDNClient(CDNClient):
                 self._LOG.debug("Found cached manifest, but encountered error or file is empty")
                 cached_manifest.remove()
 
-    def is_manifest_cached(self, app_id, depot_id, manifest_gid):
-        return self.get_cached_manifest(app_id, depot_id, manifest_gid) is not None
-
     def get_manifest(self, app_id, depot_id, manifest_gid, decrypt=True):
         key = (app_id, depot_id, manifest_gid)
         cached_manifest = UserCacheFile("manifests/{}_{}_{}".format(*key))
 
+        if decrypt and depot_id not in self.depot_keys:
+            self.get_depot_key(app_id, depot_id)
+
+        manifest = self.get_cached_manifest(*key)
+
         # if manifest not cached, download from CDN
-        if not self.is_manifest_cached(*key):
+        if not manifest:
             manifest = CDNClient.get_manifest(self, app_id, depot_id, manifest_gid, decrypt)
 
             # cache the manifest
             with cached_manifest.open('wb') as fp:
-                # if we have the key, decrypt the manifest before caching
-                if manifest.filenames_encrypted and manifest.depot_id in self.depot_keys:
-                    manifest.decrypt_filenames(self.depot_keys[manifest.depot_id])
-
                 fp.write(manifest.serialize(compress=False))
 
         return self.manifests[key]

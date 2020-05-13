@@ -117,94 +117,130 @@ def init_clients(args):
 
     cdn = s.get_cdnclient()
 
+    # short-curcuit everything, if we pass manifest file(s)
     if getattr(args, 'file', None):
         manifests = []
         for fp in args.file:
             manifests.append(CTLDepotManifest(cdn, args.app or -1, fp.read()))
-        yield s, cdn, manifests
-    else:
-        if not args.app:
-            raise SteamError("No app id specified")
+        yield None, None, manifests
+        return
 
-        # only login if we dont have depot decryption key
-        if (not args.app or not args.depot or not args.manifest or
-            args.depot not in cdn.depot_keys):
-            result = s.login_from_args(args)
+    # for everything else we need SteamClient and CDNClient
 
-            if result == EResult.OK:
-                LOG.info("Login to Steam successful")
-            else:
-                raise SteamError("Failed to login: %r" % result)
+    if not args.app:
+        raise SteamError("No app id specified")
 
-        if args.app and args.depot and args.manifest:
-            try:
-                manifests = [cdn.get_manifest(args.app, args.depot, args.manifest)]
-            except SteamError as exp:
-                if exp.eresult == EResult.AccessDenied:
-                    raise SteamError("This account doesn't have access to the app depot", exp.eresult)
-                else:
-                    raise
+    # only login when we may need it
+    if (not args.skip_login # user requested no login
+       and (not args.app or not args.depot or not args.manifest or
+            args.depot not in cdn.depot_keys)
+       ):
+        result = s.login_from_args(args)
+
+        if result == EResult.OK:
+            LOG.info("Login to Steam successful")
         else:
+            raise SteamError("Failed to login: %r" % result)
+    else:
+        LOG.info("Skipping login")
+
+    # when app, depot, and manifest are specified, we can just go to CDN
+    if args.app and args.depot and args.manifest:
+        # we can only decrypt if SteamClient is logged in, or we have depot key cached
+        if args.skip_login and args.depot not in cdn.depot_keys:
+            decrypt = False
+        else:
+            decrypt = True
+
+        # load the manifest
+        try:
+            manifests = [cdn.get_manifest(args.app, args.depot, args.manifest, decrypt=decrypt)]
+        except SteamError as exp:
+            if exp.eresult == EResult.AccessDenied:
+                raise SteamError("This account doesn't have access to the app depot", exp.eresult)
+            elif 'HTTP Error 404' in str(exp):
+                raise SteamError("Manifest not found on CDN")
+            else:
+                raise
+
+    # if only app is specified, or app and depot, we need product info to figure out manifests
+    else:
+        # no license, means no depot keys, and possibly not product info
+        if not args.skip_licenses:
             LOG.info("Checking licenses")
             cdn.load_licenses()
 
             if args.app not in cdn.licensed_app_ids:
                 raise SteamError("No license available for App ID: %s" % args.app, EResult.AccessDenied)
 
+        # check if we need to invalidate the cache data
+        if not args.skip_login:
             LOG.info("Checking change list")
             cdn.check_for_changes()
 
-            def depot_filter(depot_id, info):
-                if args.depot is not None:
-                    if args.depot != depot_id:
-                        return False
+        # handle any filtering on depot list
+        def depot_filter(depot_id, info):
+            if args.depot is not None:
+                if args.depot != depot_id:
+                    return False
 
-                if args.os != 'any':
-                    if args.os[-2:] == '64':
-                        os, arch = args.os[:-2], args.os[-2:]
-                    else:
-                        os, arch = args.os, None
+            if args.os != 'any':
+                if args.os[-2:] == '64':
+                    os, arch = args.os[:-2], args.os[-2:]
+                else:
+                    os, arch = args.os, None
 
-                    config = info.get('config', {})
+                config = info.get('config', {})
 
-                    if 'oslist' in config and (os not in config['oslist'].split(',')):
-                        return False
-                    if 'osarch' in config and config['osarch'] != arch:
-                        return False
+                if 'oslist' in config and (os not in config['oslist'].split(',')):
+                    return False
+                if 'osarch' in config and config['osarch'] != arch:
+                    return False
 
-                return True
+            return True
 
-            branch = args.branch
-            password = args.password
+        if args.skip_login:
+            if cdn.has_cached_app_depot_info(args.app):
+                LOG.info("Using cached app info")
+            else:
+                raise SteamError("No cached app info. Login to Steam")
 
-            LOG.info("Getting manifests for %s branch", repr(branch))
+        branch = args.branch
+        password = args.password
 
-            manifests = []
-            for manifest in cdn.get_manifests(args.app, branch=branch, password=password, filter_func=depot_filter, decrypt=False):
-                if manifest.depot_id not in cdn.licensed_depot_ids:
-                    LOG.error("No license for depot: %r" % manifest)
-                    continue
-                if manifest.filenames_encrypted:
+        LOG.info("Getting manifests for %s branch", repr(branch))
+
+        # enumerate manifests
+        manifests = []
+        for manifest in cdn.get_manifests(args.app, branch=branch, password=password, filter_func=depot_filter, decrypt=False):
+            if not args.skip_licenses and manifest.depot_id not in cdn.licensed_depot_ids:
+                LOG.error("No license for depot: %r" % manifest)
+                continue
+
+            if manifest.filenames_encrypted:
+                if not args.skip_login:
                     try:
                         manifest.decrypt_filenames(cdn.get_depot_key(manifest.app_id, manifest.depot_id))
                     except Exception as exp:
-                        LOG.error("Failed to decrypt manifest: %s" % str(exp))
-                        continue
-                manifests.append(manifest)
+                        LOG.error("Failed to decrypt manifest %s (depot %s): %s", manifest.gid, manifest.depot_id, str(exp))
 
-        LOG.debug("Got manifests: %r", manifests)
+                        if not args.skip_licenses:
+                            continue
 
-        yield s, cdn, manifests
+            manifests.append(manifest)
 
-        # clean and exit
-        cdn.save_cache()
-        s.disconnect()
+    LOG.debug("Got manifests: %r", manifests)
+
+    yield s, cdn, manifests
+
+    # clean and exit
+    cdn.save_cache()
+    s.disconnect()
 
 def cmd_depot_info(args):
     try:
-        with init_clients(args) as (s, cdn, manifests):
+        with init_clients(args) as (_, cdn, manifests):
             for i, manifest in enumerate(manifests, 1):
-                print("-"*40)
                 print("App ID:", manifest.app_id)
                 print("Depot ID:", manifest.metadata.depot_id)
                 print("Depot Name:", manifest.name if manifest.name else 'Unnamed Depot')
@@ -229,6 +265,9 @@ def cmd_depot_info(args):
                         print("Open branches:", ', '.join(depot_info.get('manifests', {}).keys()))
                         print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
 
+                if i != len(manifests):
+                    print("-"*40)
+
     except SteamError as exp:
         LOG.error(str(exp))
         return 1  # error
@@ -248,7 +287,7 @@ def cmd_depot_list(args):
             print(filepath)
 
     try:
-        with init_clients(args) as (s, cdn, manifests):
+        with init_clients(args) as (_, _, manifests):
             fileindex = ManifestFileIndex(manifests)
 
             # pre-index vpk file to speed up lookups
@@ -257,7 +296,7 @@ def cmd_depot_list(args):
 
             for manifest in manifests:
                 if manifest.filenames_encrypted:
-                    LOG.error("Manifest filenames are encrypted")
+                    LOG.error("Manifest %s (depot %s) filenames are encrypted.", manifest.gid, manifest.depot_id)
                     continue
 
                 for mapping in manifest.payload.mappings:
@@ -333,7 +372,7 @@ def cmd_depot_download(args):
     pbar2 = fake_tqdm()
 
     try:
-        with init_clients(args) as (s, cdn, manifests):
+        with init_clients(args) as (_, _, manifests):
             fileindex = ManifestFileIndex(manifests)
 
             # pre-index vpk file to speed up lookups
@@ -514,7 +553,7 @@ def calc_sha1_for_file(path):
 
 def cmd_depot_diff(args):
     try:
-        with init_clients(args) as (s, cdn, manifests):
+        with init_clients(args) as (_, _, manifests):
             targetdir = args.TARGETDIR
             fileindex = {}
 
@@ -570,5 +609,5 @@ def cmd_depot_diff(args):
     except KeyboardInterrupt:
         return 1  # error
     except SteamError as exp:
-        LOG.exception(exp)
+        LOG.error(exp)
         return 1  # error
