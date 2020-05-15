@@ -4,9 +4,10 @@ gevent.monkey.patch_ssl()
 
 import os
 import logging
+from time import time
 from steam.enums import EResult
 from steam.client import SteamClient
-from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile
+from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile, ContentServer
 from steam.exceptions import SteamError
 from steam.core.crypto import sha1_hash
 
@@ -169,6 +170,31 @@ class CachingCDNClient(CDNClient):
 
         # load the cached depot decryption keys
         self.depot_keys.update(self.get_cached_depot_keys())
+
+    def fetch_content_servers(self, *args, **kwargs):
+        cached_cs = UserDataFile('cs_servers.json')
+
+        data = cached_cs.read_json()
+
+        # load from cache, only keep for 5 minutes
+        if data and (data['timestamp'] + 300) > time():
+            for server in data['servers']:
+                entry = ContentServer()
+                entry.__dict__.update(server)
+                self.servers.append(entry)
+            return
+
+        # fetch cs servers
+        CDNClient.fetch_content_servers(self, *args, **kwargs)
+
+        # cache cs servers
+        data = {
+            "timestamp": int(time()),
+            "cell_id": self.cell_id,
+            "servers": list(map(lambda x: x.__dict__, self.servers)),
+        }
+
+        cached_cs.write_json(data)
 
     def get_cached_depot_keys(self):
         return {int(depot_id): bytes.fromhex(key)
