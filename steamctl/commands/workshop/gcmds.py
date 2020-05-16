@@ -17,6 +17,7 @@ from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import fmt_size
 from steamctl.utils.tqdm import tqdm, fake_tqdm
 from steamctl.commands.webapi import get_webapi_key
+from steamctl.commands.ugc.gcmds import download_via_url
 
 webapi._make_requests_session = make_requests_session
 
@@ -53,46 +54,14 @@ def cmd_workshop_download(args):
     LOG.info("App: (%s) %s" % (pubfile['consumer_appid'], pubfile['app_name']))
 
     if pubfile.get('file_url'):
-        return download_via_url(args, pubfile)
+        # reuse 'ugc download' function
+        return download_via_url(args, pubfile['file_url'], pubfile['filename'])
     elif pubfile.get('hcontent_file'):
         return download_via_steampipe(args, pubfile)
     else:
         LOG.error("This workshop file is not downloable")
         return 1
 
-
-def download_via_url(args, pubfile):
-    sess = make_requests_session()
-    fstream = sess.get(pubfile['file_url'], stream=True)
-    total_size = int(pubfile['file_size'])
-
-    relpath = sanitizerelpath(pubfile['filename'])
-
-    if args.no_directories:
-        relpath = os.path.basename(relpath)
-
-    relpath = os.path.join(args.output, relpath)
-
-    filepath = os.path.abspath(relpath)
-    ensure_dir(filepath)
-
-    with open(filepath, 'wb') as fp:
-        if not args.no_progress and sys.stderr.isatty():
-            pbar = tqdm(total=total_size, unit='B', unit_scale=True)
-            gevent.spawn(pbar.gevent_refresh_loop)
-        else:
-            pbar = fake_tqdm()
-
-        LOG.info('Downloading to {} ({})'.format(
-                    relpath,
-                    fmt_size(total_size),
-                    ))
-
-        for chunk in iter(lambda: fstream.raw.read(1024**2), b''):
-            fp.write(chunk)
-            pbar.update(len(chunk))
-
-        pbar.close()
 
 def download_via_steampipe(args, pubfile):
     from steamctl.clients import CachingSteamClient

@@ -41,6 +41,10 @@ Command list
 
     steamid             Parse SteamID representations
 
+    ugc                 Info and download of user generated content
+    |- info               Get details for UGC
+    \- download           Download UGC
+
     webapi              Access to WebAPI
     |- set-key            Set WebAPI key
     |- clear-key          Remove saved key

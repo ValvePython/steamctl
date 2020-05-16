@@ -12,6 +12,7 @@ import steamctl.commands.authenticator
 import steamctl.commands.depot
 import steamctl.commands.hlmaster
 import steamctl.commands.steamid
+import steamctl.commands.ugc
 import steamctl.commands.webapi
 import steamctl.commands.workshop
 
