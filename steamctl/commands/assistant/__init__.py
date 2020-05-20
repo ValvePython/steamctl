@@ -18,5 +18,5 @@ def cmd_parser(cp):
                                description='',
                                )
 
-    scp_i = sub_cp.add_parser("idle-cards", help="Automatically idling for game cards")
+    scp_i = sub_cp.add_parser("idle-cards", help="Automatic idling for game cards")
     scp_i.set_defaults(_cmd_func=__name__ + '.card_idler:cmd_assistant_idle_cards')

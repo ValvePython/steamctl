@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from collections import namedtuple
 from steamctl.clients import CachingSteamClient
 from steamctl.utils.web import make_requests_session
-from steam.client import EMsg
+from steam.client import EMsg, EResult
 from bs4 import BeautifulSoup
 
 import steam.client.builtins.web
@@ -51,10 +51,6 @@ class IdleClient(CachingSteamClient):
 def init_client(args):
     s = IdleClient()
     s.login_from_args(args)
-
-    if not s.licenses:
-        s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=5)
-
     yield s
     s.disconnect()
 
@@ -62,15 +58,19 @@ def init_client(args):
 Game = namedtuple('Game', 'appid name cards_left playtime')
 
 def get_remaining_cards(s):
+    # introduced delay in case account takes longer to login
+    if not s.licenses:
+        s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=5)
+
     web = s.get_web_session()
 
     if not web:
         LOG.error("Failed to get web session")
-        return {}
+        return
 
     page = BeautifulSoup(web.get('https://steamcommunity.com/my/badges/').content, 'html.parser')
 
-    games = {}
+    games = []
 
     for badge in page.select('div.badge_row'):
         status = badge.select('.progress_info_bold')
@@ -88,24 +88,31 @@ def get_remaining_cards(s):
         appid = int(re.search('gamecards/(\d+)/', badge.select('[href*=gamecards]')[0].get('href')).group(1))
         playtime = float((badge.select('.badge_title_stats_playtime')[0].get_text(strip=True) or '0').split(' ', 1)[0])
 
-        games[appid] = Game(appid, name, cards_left, playtime)
+        games.append(Game(appid, name, cards_left, playtime))
 
     return games
 
 def cmd_assistant_idle_cards(args):
     with init_client(args) as s:
-        LOG.info("Checking for games with cards left..")
-
         while True:
             # ensure we are connected and logged in
             if not s.connected:
                 s.reconnect()
+                continue
 
             if not s.logged_on:
-                s.relogin()  # TODO: check return for failed pass
-                s.sleep(1)
+                if not s.relogin_available:
+                    return 1 # error
 
-            # check badges for any games with cards left
+                result = s.relogin()
+
+                if result != EResult.OK:
+                    LOG.info("Login failed: %s", repr(EResult(result)))
+
+                continue
+
+            # check badges for cards
+            LOG.info("Checking for games with cards left..")
             games = get_remaining_cards(s)
 
             if not games:
@@ -114,25 +121,24 @@ def cmd_assistant_idle_cards(args):
                 continue
 
             n_games = len(games)
-            n_cards = sum(map(lambda game: game.cards_left, games.values()))
+            n_cards = sum(map(lambda game: game.cards_left, games))
 
             LOG.info("%s card(s) left across %s game(s)", n_cards, n_games)
 
             # pick game or games to idle
-            low_playtime_games = list(filter(lambda game: game.playtime <= 3, games.values()))
+            if len(games) > 32:
+                random.shuffle(games)
 
-            if low_playtime_games:
-                random.shuffle(low_playtime_games)
-                games_to_play = low_playtime_games[:32]
-                LOG.info("Playing: %s", ', '.join(sorted(map(lambda game: game.name, games_to_play))))
-            else:
-                games_to_play = sorted(games.values(), key=lambda game: game.cards_left)[:1]
-                LOG.info("Playing: %s - %s card(s) left", games_to_play[0].name, games_to_play[0].cards_left)
+            # only 32 can be idled at a single time
+            games = games[:32]
+            LOG.info("Playing: %s", ', '.join(sorted(map(lambda game: game.name, games))))
 
             # play games
-            s.games_played(list(map(lambda game: game.appid, games_to_play)))
+            s.games_played(list(map(lambda game: game.appid, games)))
+            s.sleep(1)
 
             # hold and wait for wakeup, or refresh after interval
+            s.wakeup.clear()
             s.wakeup.wait(timeout=600)
             s.wakeup.clear()
 
