@@ -101,7 +101,7 @@ def get_remaining_cards(s):
             if not status:
                 continue
 
-            m = re.match('(\d+) card drops', status[0].get_text(strip=True))
+            m = re.match('(\d+) card drops?', status[0].get_text(strip=True))
 
             if not m:
                 continue
