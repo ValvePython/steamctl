@@ -51,6 +51,10 @@ class IdleClient(CachingSteamClient):
 def init_client(args):
     s = IdleClient()
     s.login_from_args(args)
+
+    if not s.licenses:
+        s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=5)
+
     yield s
     s.disconnect()
 
@@ -58,9 +62,13 @@ def init_client(args):
 Game = namedtuple('Game', 'appid name cards_left playtime')
 
 def get_remaining_cards(s):
-    resp = s.get_web_session().get('https://steamcommunity.com/my/badges/')
+    web = s.get_web_session()
 
-    page = BeautifulSoup(resp.content, 'html.parser')
+    if not web:
+        LOG.error("Failed to get web session")
+        return {}
+
+    page = BeautifulSoup(web.get('https://steamcommunity.com/my/badges/').content, 'html.parser')
 
     games = {}
 
@@ -101,8 +109,8 @@ def cmd_assistant_idle_cards(args):
             games = get_remaining_cards(s)
 
             if not games:
-                LOG.info("No cards left to idle")
-                s.wakeup.wait(timeout=900)
+                LOG.info("No games with card left were found. Checking again in 10 mins...")
+                s.wakeup.wait(timeout=600)
                 continue
 
             n_games = len(games)
