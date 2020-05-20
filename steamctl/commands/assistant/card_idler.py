@@ -48,7 +48,10 @@ class IdleClient(CachingSteamClient):
             self._LOG.info("Attemping reconnect in %s second(s)..", delay)
 
     def __handle_item_notification(self, msg):
-        self._LOG.info("Notification: %s new item(s)", msg.body.count_new_items)
+        if msg.body.count_new_items == 100:
+            self._LOG.info("Notification: over %s new items", msg.body.count_new_items)
+        else:
+            self._LOG.info("Notification: %s new item(s)", msg.body.count_new_items)
         self.wakeup.set()
 
 @contextmanager
