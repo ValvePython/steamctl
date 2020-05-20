@@ -37,7 +37,7 @@ class IdleClient(CachingSteamClient):
 
     def connect(self, *args, **kwargs):
         self.wakeup.clear()
-        CachingSteamClient.connect(self, *args, **kwargs)
+        return CachingSteamClient.connect(self, *args, **kwargs)
 
     def __handle_disconnected(self):
         self._LOG.info("Disconnected from Steam")

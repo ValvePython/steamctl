@@ -72,6 +72,8 @@ class CachingSteamClient(SteamClient):
                 self.login_key = userkey.read_text()
                 result = self.relogin()
 
+                self._LOG.debug("Re-login result is: %s", repr(EResult(result)))
+
                 if result == EResult.InvalidPassword:
                     self._LOG.info("Remembered credentials have expired")
                     userkey.remove()
@@ -92,6 +94,7 @@ class CachingSteamClient(SteamClient):
         if not lastFile.exists() or lastFile.read_text() != self.username:
             lastFile.write_text(self.username)
 
+        self._LOG.debug("Login result is: %s", repr(EResult(result)))
         return result
 
 
