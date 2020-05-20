@@ -20,6 +20,7 @@ install_requires = [
     'arrow',
     'pyqrcode',
     'vpk>=1.3.2',
+    'beautifulsoup4',
 ]
 
 setup(
