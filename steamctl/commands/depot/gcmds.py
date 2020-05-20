@@ -17,6 +17,7 @@ import vpk
 from steam import webapi
 from steam.exceptions import SteamError
 from steam.enums import EResult, EDepotFileFlag
+from steam.client import EMsg
 from steamctl.clients import CachingSteamClient, CTLDepotManifest, CTLDepotFile
 from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import fmt_size, fmt_datetime
@@ -168,6 +169,10 @@ def init_clients(args):
         # no license, means no depot keys, and possibly not product info
         if not args.skip_licenses:
             LOG.info("Checking licenses")
+
+            if not s.licenses:
+                s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=10)
+
             cdn.load_licenses()
 
             if args.app not in cdn.licensed_app_ids:
