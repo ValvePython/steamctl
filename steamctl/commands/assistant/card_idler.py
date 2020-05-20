@@ -93,10 +93,13 @@ def get_remaining_cards(s):
         page = BeautifulSoup(resp.content, 'html.parser')
 
         if n_pages == 1:
-            m = re.search('of (\S+) badges', page.select('.profile_paging')[0].get_text(strip=True))
-            if m:
-                n_badges = int(re.sub('[^0-9]', '', m.group(1)))
-                n_pages = math.ceil(n_badges / 150)
+            elms = page.select('.profile_paging')
+
+            if elms:
+                m = re.search('of (\S+) badges', elms[0].get_text(strip=True))
+                if m:
+                    n_badges = int(re.sub('[^0-9]', '', m.group(1)))
+                    n_pages = math.ceil(n_badges / 150)
 
         for badge in page.select('div.badge_row'):
             status = badge.select('.progress_info_bold')
