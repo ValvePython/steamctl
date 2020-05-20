@@ -170,7 +170,7 @@ def init_clients(args):
         if not args.skip_licenses:
             LOG.info("Checking licenses")
 
-            if not s.licenses:
+            if s.logged_on and not s.licenses and s.steam_id.type != s.steam_id.EType.AnonUser:
                 s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=10)
 
             cdn.load_licenses()
