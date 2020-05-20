@@ -6,9 +6,11 @@ gevent.monkey.patch_ssl()
 import os
 import re
 import sys
+import math
 import random
 import logging
 from io import open
+from itertools import count
 from contextlib import contextmanager
 from collections import namedtuple
 from steamctl.clients import CachingSteamClient
@@ -22,6 +24,8 @@ steam.client.builtins.web.make_requests_session = make_requests_session
 LOG = logging.getLogger(__name__)
 
 class IdleClient(CachingSteamClient):
+    _LOG = logging.getLogger("IdleClient")
+
     def __init__(self, *args, **kwargs):
         CachingSteamClient.__init__(self, *args, **kwargs)
 
@@ -68,27 +72,49 @@ def get_remaining_cards(s):
         LOG.error("Failed to get web session")
         return
 
-    page = BeautifulSoup(web.get('https://steamcommunity.com/my/badges/').content, 'html.parser')
 
     games = []
+    n_pages = 1
 
-    for badge in page.select('div.badge_row'):
-        status = badge.select('.progress_info_bold')
+    for n in count(1):
+        LOG.debug("Loading badge page %s", n)
+        resp = web.get('https://steamcommunity.com/profiles/{}/badges?sort=p&p={}'.format(
+                            s.steam_id.as_64,
+                            n,
+                           ))
 
-        if not status:
-            continue
+        if resp.status_code != 200:
+            LOG.error("Error fetching badges: HTTP %s", resp.status_code)
+            return
 
-        m = re.match('(\d+) card drops', status[0].get_text(strip=True))
+        page = BeautifulSoup(resp.content, 'html.parser')
 
-        if not m:
-            continue
+        if n_pages == 1:
+            m = re.search('of (\S+) badges', page.select('.profile_paging')[0].get_text(strip=True))
+            if m:
+                n_badges = int(re.sub('[^0-9]', '', m.group(1)))
+                n_pages = math.ceil(n_badges / 150)
 
-        cards_left = int(m.group(1))
-        name = badge.select('.badge_title')[0].get_text('\x00', True).split('\x00', 1)[0]
-        appid = int(re.search('gamecards/(\d+)/', badge.select('[href*=gamecards]')[0].get('href')).group(1))
-        playtime = float((badge.select('.badge_title_stats_playtime')[0].get_text(strip=True) or '0').split(' ', 1)[0])
+        for badge in page.select('div.badge_row'):
+            status = badge.select('.progress_info_bold')
 
-        games.append(Game(appid, name, cards_left, playtime))
+            if not status:
+                continue
+
+            m = re.match('(\d+) card drops', status[0].get_text(strip=True))
+
+            if not m:
+                continue
+
+            cards_left = int(m.group(1))
+            name = badge.select('.badge_title')[0].get_text('\x00', True).split('\x00', 1)[0]
+            appid = int(re.search('gamecards/(\d+)/', badge.select('[href*=gamecards]')[0].get('href')).group(1))
+            playtime = float((badge.select('.badge_title_stats_playtime')[0].get_text(strip=True) or '0').split(' ', 1)[0])
+
+            games.append(Game(appid, name, cards_left, playtime))
+
+        if n == n_pages:
+            break
 
     return games
 
@@ -107,7 +133,7 @@ def cmd_assistant_idle_cards(args):
                 result = s.relogin()
 
                 if result != EResult.OK:
-                    LOG.info("Login failed: %s", repr(EResult(result)))
+                    LOG.warning("Login failed: %s", repr(EResult(result)))
 
                 continue
 
@@ -125,7 +151,7 @@ def cmd_assistant_idle_cards(args):
 
             LOG.info("%s card(s) left across %s game(s)", n_cards, n_games)
 
-            # pick game or games to idle
+            # pick games to idle
             if len(games) > 32:
                 random.shuffle(games)
 
