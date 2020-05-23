@@ -29,6 +29,7 @@ Command list
     |- add                Add authentictor to a Steam account
     |- remove             Remove an authenticator
     |- list               List all authenticators
+    |- status             Query Steam Guard status for account
     |- code               Generate auth code
     \- qrcode             Generate QR code
 

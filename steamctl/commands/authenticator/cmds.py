@@ -7,6 +7,7 @@ from steamctl.utils.prompt import pmt_confirmation, pmt_input
 from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import print_table, fmt_datetime
 from steam import webapi, webauth
+from steam.enums import EResult
 from steam.guard import SteamAuthenticator, SteamAuthenticatorError
 
 # patch session method
@@ -258,6 +259,46 @@ def cmd_authenticator_list(args):
                     )
     else:
         print("No authenticators found")
+
+def cmd_authenticator_status(args):
+    account = args.account.lower().strip()
+    secrets_file = UserDataFile('authenticator/{}.json'.format(account))
+    sa = None
+
+    wa = BetterMWA(account)
+
+    if secrets_file.exists():
+        sa = SteamAuthenticator(secrets_file.read_json(), backend=wa)
+
+    try:
+        wa.bcli_login(sa_instance=sa)
+    except (KeyboardInterrupt, EOFError):
+        print("Login interrupted")
+        return 1  # error
+
+    status = sa.status()
+
+    print("----- Status ------------")
+    mode = status['steamguard_scheme']
+
+    if mode == 0:
+        print("Steam Guard mode: disabled/insecure")
+    elif mode == 1:
+        print("Steam Guard mode: enabled (email)")
+    elif mode == 2:
+        print("Steam Guard mode: enabled (authenticator)")
+    else:
+        print("Steam Guard mode: unknown ({})".format(mode))
+
+    print("Authenticator enabled:", "Yes" if status['state'] == 1 else "No")
+    print("Authenticator allowed:", "Yes" if status['state'] else "No")
+    print("Email verified:", "Yes" if status['email_validated'] else "No")
+    print("External allowed:", "Yes" if status['allow_external_authenticator'] else "No")
+
+    if status['state'] == 1:
+        print("----- Token details -----")
+        print("Token GID:", status['token_gid'])
+        print("Created at:", fmt_datetime(status['time_created']))
 
 def cmd_authenticator_code(args):
     account = args.account.lower().strip()

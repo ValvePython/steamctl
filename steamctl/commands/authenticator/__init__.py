@@ -43,6 +43,10 @@ def cmd_parser(cp):
         return [userfile.filename[:-5]
                 for userfile in UserDataDirectory('authenticator').iter_files('*.json')]
 
+    scp = sub_cp.add_parser("status", help="Query Steam Guard status for account")
+    scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete
+    scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_status')
+
     scp = sub_cp.add_parser("code", help="Generate auth code")
     scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_code')
