@@ -23,7 +23,8 @@ Command list
 .. code:: text
 
     assistant           Helpful automation
-    \- idle-cards         Automatic idling for game cards
+    |- idle-cards         Automatic idling for game cards
+    \- and more...
 
     authenticator       Manage Steam authenticators
     |- add                Add authentictor to a Steam account
