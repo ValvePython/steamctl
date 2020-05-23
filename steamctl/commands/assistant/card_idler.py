@@ -30,6 +30,7 @@ class IdleClient(CachingSteamClient):
         CachingSteamClient.__init__(self, *args, **kwargs)
 
         self.wakeup = gevent.event.Event()
+        self.newcards = gevent.event.Event()
 
         self.on(self.EVENT_DISCONNECTED, self.__handle_disconnected)
         self.on(self.EVENT_RECONNECT, self.__handle_reconnect)
@@ -52,6 +53,7 @@ class IdleClient(CachingSteamClient):
             self._LOG.info("Notification: over %s new items", msg.body.count_new_items)
         else:
             self._LOG.info("Notification: %s new item(s)", msg.body.count_new_items)
+        self.newcards.set()
         self.wakeup.set()
 
 @contextmanager
@@ -166,15 +168,29 @@ def cmd_assistant_idle_cards(args):
             LOG.info("Playing: %s", ', '.join(sorted(map(lambda game: game.name, games))))
 
             # play games
-            s.games_played(list(map(lambda game: game.appid, games)))
-            s.sleep(1)
+            games_to_play = list(map(lambda game: game.appid, games))
+            s.newcards.clear()
 
-            # hold and wait for wakeup, or refresh after interval
+            # rapid fire playing
+            for _ in range(6):
+                s.wakeup.clear()
+                s.games_played(games_to_play)
+                s.wakeup.wait(timeout=10)
+                s.games_played([])
+                s.sleep(1)
+
+                if s.newcards.is_set():
+                    break
+
+            if s.newcards.is_set():
+                continue
+
+            # accumulate play time
             s.wakeup.clear()
+            s.games_played(games_to_play)
             s.wakeup.wait(timeout=600)
-            s.wakeup.clear()
-
             s.games_played([])
+            s.sleep(1)
 
 
 
