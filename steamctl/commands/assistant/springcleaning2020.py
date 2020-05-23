@@ -70,4 +70,4 @@ def cmd_assistant_sc2020(args):
         s.games_played(apps_to_play)
         s.sleep(1)
 
-        print("All talks done. Enjoy")
+        print("All tasks done. Enjoy")
