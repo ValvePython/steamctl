@@ -23,6 +23,7 @@ steam.client.builtins.web.make_requests_session = make_requests_session
 
 LOG = logging.getLogger(__name__)
 
+
 class IdleClient(CachingSteamClient):
     _LOG = logging.getLogger("IdleClient")
 
@@ -31,10 +32,12 @@ class IdleClient(CachingSteamClient):
 
         self.wakeup = gevent.event.Event()
         self.newcards = gevent.event.Event()
+        self.playing_blocked = gevent.event.Event()
 
         self.on(self.EVENT_DISCONNECTED, self.__handle_disconnected)
         self.on(self.EVENT_RECONNECT, self.__handle_reconnect)
         self.on(EMsg.ClientItemAnnouncements, self.__handle_item_notification)
+        self.on(EMsg.ClientPlayingSessionState, self.__handle_playing_session)
 
     def connect(self, *args, **kwargs):
         self.wakeup.clear()
@@ -54,6 +57,13 @@ class IdleClient(CachingSteamClient):
         else:
             self._LOG.info("Notification: %s new item(s)", msg.body.count_new_items)
         self.newcards.set()
+        self.wakeup.set()
+
+    def __handle_playing_session(self, msg):
+        if msg.body.playing_blocked:
+            self.playing_blocked.set()
+        else:
+            self.playing_blocked.clear()
         self.wakeup.set()
 
 @contextmanager
@@ -145,13 +155,20 @@ def cmd_assistant_idle_cards(args):
 
                 continue
 
+            s.wakeup.clear()
+
+            if s.playing_blocked.is_set():
+                LOG.info("Another Steam session is playing right now. Waiting for it to finish...")
+                s.wakeup.wait(timeout=3600)
+                continue
+
             # check badges for cards
             LOG.info("Checking for games with cards left..")
             games = get_remaining_cards(s)
 
             if not games:
-                LOG.info("No games with card left were found. Checking again in 10 mins...")
-                s.wakeup.wait(timeout=600)
+                LOG.info("No games with card left were found. Idling..")
+                s.wakeup.wait(timeout=60 if games is None else 600)
                 continue
 
             n_games = len(games)

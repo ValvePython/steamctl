@@ -13,7 +13,7 @@ with open(path.join(here, 'steamctl/__init__.py'), encoding='utf-8') as f:
     __author__ = f.readline().split('"')[1]
 
 install_requires = [
-    'steam[client]~=1.0',
+    'steam[client]>=1.0.1,<2.0',
     'appdirs',
     'argcomplete',
     'tqdm',
