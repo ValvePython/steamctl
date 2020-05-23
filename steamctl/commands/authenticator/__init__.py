@@ -28,9 +28,9 @@ def cmd_parser(cp):
 
     scp = sub_cp.add_parser("remove", help="Remove an authenticator")
     scp.add_argument('--force', action='store_true',
-                     help='Force removed authenticator. '
-                          'If authenticator is still attached to an account '
-                          'you will lose access to the account!'
+                     help='Delete local secrets only. Does not attempt to remove from account. '
+                          'This may lead to losing access to the account if the authenticator '
+                          'is still attached to an account.'
                      )
     scp.add_argument('account', type=str, help='Account name')
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_remove')

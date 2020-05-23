@@ -51,33 +51,37 @@ class BetterMWA(webauth.MobileWebAuth):
                           "Incorrect code. Enter email code: ")
                 email_code, twofactor_code = input(prompt), ''
             except webauth.TwoFactorCodeRequired as exp:
-                if not sa_instance:
-                    prompt = ("Enter 2FA code: " if not twofactor_code else
-                              "Incorrect code. Enter 2FA code: ")
-                    email_code, twofactor_code = '', input(prompt)
-                else:
-                    if twofactor_code:
-                        print("Login error: %s" % str(exp))
-                        if not pmt_confirmation("Try again?", default_yes=True):
-                            raise EOFError
+                if sa_instance:
+                    print("Authenticator available. Leave blank to use it, or manually enter code")
 
-                    email_code, twofactor_code = '', sa_instance.get_code()
+                prompt = ("Enter 2FA code: " if not twofactor_code else
+                          "Incorrect code. Enter 2FA code: ")
+
+                code = input(prompt)
+
+                if sa_instance and not code:
+                    code = sa_instance.get_code()
+
+                email_code, twofactor_code = '', code
 
 
 def cmd_authenticator_add(args):
     account = args.account.lower().strip()
     secrets_file = UserDataFile('authenticator/{}.json'.format(account))
+    sa = None
 
-    if secrets_file.exists() and not args.force:
-        print("There is already an authenticator for that account. Use --force to overwrite")
-        return 1  # error
+    if secrets_file.exists():
+        if not args.force:
+            print("There is already an authenticator for that account. Use --force to overwrite")
+            return 1  # error
+        sa = SteamAuthenticator(secrets_file.read_json())
 
     print("To add an authenticator, first we need to login to Steam")
     print("Account name:", account)
 
     wa = BetterMWA(account)
     try:
-        wa.bcli_login()
+        wa.bcli_login(sa_instance=sa)
     except (KeyboardInterrupt, EOFError):
         print("Login interrupted")
         return 1  # error
@@ -85,6 +89,22 @@ def cmd_authenticator_add(args):
     print("Login successful. Checking pre-conditions...")
 
     sa = SteamAuthenticator(backend=wa)
+
+    status = sa.status()
+    _LOG.debug("Authenticator status: %s", status)
+
+    if not status['email_validated']:
+        print("Account needs a verified email address")
+        return 1 # error
+
+    if status['state'] == 1:
+        print("This account already has an authenticator.")
+        print("You need to remove it first, before proceeding")
+        return 1 # error
+
+    if not status['authenticator_allowed']:
+        print("This account is now allowed to have authenticator")
+        return 1 # error
 
     # check phone number, and add one if its missing
     if not sa.has_phone_number():
@@ -170,8 +190,8 @@ def cmd_authenticator_add(args):
 
     # finish line
     print("Authenticator added successfully!")
-    print("To get a code run: {} authenticator code {}".format(__appname__, account))
-    print("Or for QRcode run: {} authenticator qrcode {}".format(__appname__, account))
+    print("Get a code: {} authenticator code {}".format(__appname__, account))
+    print("Or QR code: {} authenticator qrcode {}".format(__appname__, account))
 
 
 def cmd_authenticator_remove(args):
@@ -201,6 +221,7 @@ def cmd_authenticator_remove(args):
         return 1  # error
 
     print("Login successful.")
+    print("Steam Guard will be set to email, after removal.")
 
     while True:
         if not pmt_confirmation("Proceed with removing Steam Authenticator?"):
@@ -215,7 +236,7 @@ def cmd_authenticator_remove(args):
                 break
             else:
                 secrets_file.remove()
-                print("Removal successfu!")
+                print("Removal successful!")
                 return
 
     print("Removal cancelled.")
