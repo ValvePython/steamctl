@@ -65,6 +65,9 @@ class CachingSteamClient(SteamClient):
             # attempt login
             self.username = user
 
+            if not lastFile.exists() or lastFile.read_text() != self.username:
+                lastFile.write_text(self.username)
+
             # check for userkey and login without a prompt
             userkey =  UserDataFile('client/%s.key' % self.username)
             if userkey.exists():
