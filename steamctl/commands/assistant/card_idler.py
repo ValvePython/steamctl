@@ -181,18 +181,19 @@ def cmd_assistant_idle_cards(args):
                 random.shuffle(games)
 
             # only 32 can be idled at a single time
-            games = games[:32]
-            LOG.info("Playing: %s", ', '.join(sorted(map(lambda game: game.name, games))))
+            games = sorted(games[:32], key=lambda game: game.playtime, reverse=True)
+            LOG.info("Playing: %s", ', '.join(map(lambda game: "{} ({:.1f} hrs)".format(game.appid, game.playtime), games)))
 
             # play games
             games_to_play = list(map(lambda game: game.appid, games))
             s.newcards.clear()
 
             # rapid fire playing
-            for _ in range(6):
-                s.wakeup.clear()
+            for _ in range(4):
                 s.games_played(games_to_play)
-                s.wakeup.wait(timeout=10)
+                s.playing_blocked.wait(timeout=2)
+                s.wakeup.clear()
+                s.wakeup.wait(timeout=15)
                 s.games_played([])
                 s.sleep(1)
 
@@ -203,8 +204,9 @@ def cmd_assistant_idle_cards(args):
                 continue
 
             # accumulate play time
-            s.wakeup.clear()
             s.games_played(games_to_play)
+            s.playing_blocked.wait(timeout=2)
+            s.wakeup.clear()
             s.wakeup.wait(timeout=600)
             s.games_played([])
             s.sleep(1)
