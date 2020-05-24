@@ -41,6 +41,7 @@ class IdleClient(CachingSteamClient):
 
     def connect(self, *args, **kwargs):
         self.wakeup.clear()
+        self._LOG.info("Connecting to Steam...")
         return CachingSteamClient.connect(self, *args, **kwargs)
 
     def __handle_disconnected(self):
@@ -188,28 +189,16 @@ def cmd_assistant_idle_cards(args):
             games_to_play = list(map(lambda game: game.appid, games))
             s.newcards.clear()
 
-            # rapid fire playing
-            for _ in range(4):
+            for timeout in [15, 15, 30, 30, 60, 60, 120, 120, 240, 360, 360]:
                 s.games_played(games_to_play)
                 s.playing_blocked.wait(timeout=2)
                 s.wakeup.clear()
-                s.wakeup.wait(timeout=15)
+                s.wakeup.wait(timeout=timeout)
                 s.games_played([])
                 s.sleep(1)
 
                 if s.newcards.is_set():
                     break
-
-            if s.newcards.is_set():
-                continue
-
-            # accumulate play time
-            s.games_played(games_to_play)
-            s.playing_blocked.wait(timeout=2)
-            s.wakeup.clear()
-            s.wakeup.wait(timeout=600)
-            s.games_played([])
-            s.sleep(1)
 
 
 
