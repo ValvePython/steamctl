@@ -52,8 +52,13 @@ def cmd_parser(cp):
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_code')
 
     scp = sub_cp.add_parser("qrcode", help="Generate QR code")
-    scp.add_argument('--alt', action='store_true',
-                     help='Swaps QR code colors. Use if your app fails to scan the QR code'
+    scp.add_argument('--compat', action='store_true',
+                     help='Alternative QR code mode (e.g. otpauth://totp/....). '
+                          'The default mode is custom format (otpath://steam/...), and requires custom Steam support in your 2FA app. '
+                          'Apps with support: Aegis and andOTP.'
+                     )
+    scp.add_argument('--invert', action='store_true',
+                     help='Invert QR code colors. Try if app fails to scan the code.'
                      )
     scp.add_argument('account', type=str, help='Account name').completer = account_autocomplete
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_qrcode')

@@ -321,7 +321,7 @@ def cmd_authenticator_qrcode(args):
     import pyqrcode
     from base64 import b64decode, b32encode
 
-    if args.alt:
+    if args.invert:
         FG, BG = '0', '1'
     else:
         FG, BG = '1', '0'
@@ -333,14 +333,20 @@ def cmd_authenticator_qrcode(args):
       (FG, BG): '▄',
     }
 
-    uri = 'otpauth://totp/steamctl:{user}?secret={secret}&issuer=Steam&digits=5'.format(user=secrets['account_name'],
-                                                                                        secret=b32encode(b64decode(secrets['shared_secret'])).decode('ascii'),
-                                                                                        )
+    if args.compat:
+        uri = 'otpauth://totp/steamctl:{user}?secret={secret}&issuer=Steam&digits=5'
+    else:
+        uri = 'otpauth://steam/steamctl:{user}?secret={secret}&issuer=Steam'
+
+
+    uri = uri.format(user=secrets['account_name'],
+                     secret=b32encode(b64decode(secrets['shared_secret'])).decode('ascii'),
+                     )
 
     qrlines = pyqrcode.create(uri, error='M').text(1).split('\n')[:-1]
 
-    print("Scan the QR code with Aegis Authenticator")
-    print("!!! Change the type from TOTP to Steam in the app !!!")
+    print("Suggested 2FA App: Aegis, andOTP")
+    print("Scan the QR code below:")
 
     for y in range(0, len(qrlines), 2):
         for x in range(0, len(qrlines[y])):
