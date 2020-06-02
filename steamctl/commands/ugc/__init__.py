@@ -28,5 +28,5 @@ def cmd_parser(cp):
     scp_dl.add_argument('-o', '--output', type=str, default='', help='Path to directory for the downloaded files (default: cwd)')
     scp_dl.add_argument('-nd', '--no-directories', action='store_true', help='Do not create directories')
     scp_dl.add_argument('-np', '--no-progress', action='store_true', help='Do not create directories')
-    scp_dl.add_argument('ugc', type=int, help='Workshop item ID')
+    scp_dl.add_argument('ugc', type=int, help='UGC ID')
     scp_dl.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_ugc_download')
