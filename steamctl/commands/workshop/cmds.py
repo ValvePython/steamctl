@@ -10,12 +10,19 @@ webapi._make_requests_session = make_requests_session
 
 _LOG = logging.getLogger(__name__)
 
-def cmd_workshop_search(args):
+
+def check_apikey(args):
     apikey = args.apikey or get_webapi_key()
 
     if not apikey:
         _LOG.error("No WebAPI key set. See: steamctl webapi -h")
         return 1  #error
+
+    return apikey
+
+
+def cmd_workshop_search(args):
+    apikey = check_apikey(args)
 
     maxpages, _ = divmod(args.numresults, 100)
     firstpage = True
@@ -108,11 +115,7 @@ def cmd_workshop_search(args):
                 )
 
 def cmd_workshop_info(args):
-    apikey = args.apikey or get_webapi_key()
-
-    if not apikey:
-        _LOG.error("No WebAPI key set. See: steamctl webapi -h")
-        return 1  #error
+    apikey = check_apikey(args)
 
     params = {
         'key': apikey,
@@ -143,3 +146,77 @@ def cmd_workshop_info(args):
         return 1 # error
 
     print(json.dumps(result, indent=2))
+
+
+def webapi_sub_helper(args, cmd):
+    apikey = check_apikey(args)
+
+    subscribe = not cmd.startswith('un')
+
+    if cmd.endswith('subscribe'):
+        list_type = 1
+    elif cmd.endswith('favorite'):
+        list_type = 2
+
+    try:
+        workshop_items = webapi.get('IPublishedFileService', 'GetDetails',
+                                    params={
+                                        'key': apikey,
+                                        'publishedfileids': list(set(args.workshop_ids)),
+                                        'includetags': 0,
+                                        'includeadditionalpreviews': 0,
+                                        'includechildren': 0,
+                                        'includekvtags': 0,
+                                        'includevotes': 0,
+                                        'includeforsaledata': 0,
+                                        'includemetadata': 0,
+                                        'return_playtime_stats': 0,
+                                        'strip_description_bbcode': 0,
+                                    },
+                                    )['response']['publishedfiledetails']
+    except Exception as exp:
+        _LOG.debug("webapi request failed: %s", str(exp))
+        _LOG.error("Failed fetching workshop details")
+        return 1 # error
+
+
+    has_error = False
+
+    for item in workshop_items:
+        title = item['title']
+        workshop_id = item['publishedfileid']
+
+        if item['result'] != EResult.OK:
+            _LOG.error("Error for %s: %s", workshop_id, EResult(item['result']))
+            continue
+
+        try:
+            result = webapi.post('IPublishedFileService', 'Subscribe' if subscribe else "Unsubscribe",
+                                 params={
+                                    'key': apikey,
+                                    'publishedfileid': workshop_id,
+                                    'list_type': list_type,
+                                    'notify_client': 1,
+                                 },
+                                 )
+        except Exception as exp:
+            _LOG.debug("webapi request failed: %s", str(exp))
+            _LOG.error("%s failed for %s - %s", cmd.capitalize(), workshop_id, title)
+            has_error = True
+        else:
+            _LOG.info("%sd %s - %s", cmd.capitalize(), workshop_id, title)
+
+    if has_error:
+        return 1 # error
+
+def cmd_workshop_subscribe(args):
+    return webapi_sub_helper(args, 'subscribe')
+
+def cmd_workshop_unsubscribe(args):
+    return webapi_sub_helper(args, 'unsubscribe')
+
+def cmd_workshop_favorite(args):
+    return webapi_sub_helper(args, 'favorite')
+
+def cmd_workshop_unfavorite(args):
+    return webapi_sub_helper(args, 'unfavorite')

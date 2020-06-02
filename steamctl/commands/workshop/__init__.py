@@ -58,3 +58,23 @@ def cmd_parser(cp):
     scp_dl.add_argument('-np', '--no-progress', action='store_true', help='Do not create directories')
     scp_dl.add_argument('id', type=int, help='Workshop item ID')
     scp_dl.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_workshop_download')
+
+    scp_s = sub_cp.add_parser("subscribe", help="Subscribe to workshop items")
+    scp_s.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_s.add_argument('workshop_ids', metavar='workshop_id', type=int, nargs='+', help='Workshop ID')
+    scp_s.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_subscribe')
+
+    scp_s = sub_cp.add_parser("unsubscribe", help="Unsubscribe to workshop items")
+    scp_s.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_s.add_argument('workshop_ids', metavar='workshop_id', type=int, nargs='+', help='Workshop ID')
+    scp_s.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_unsubscribe')
+
+    scp_s = sub_cp.add_parser("favorite", help="Favourite workshop items")
+    scp_s.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_s.add_argument('workshop_ids', metavar='workshop_id', type=int, nargs='+', help='Workshop ID')
+    scp_s.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_favorite')
+
+    scp_s = sub_cp.add_parser("unfavorite", help="Unfavourite workshop items")
+    scp_s.add_argument('--apikey', type=str, help='WebAPI key to use')
+    scp_s.add_argument('workshop_ids', metavar='workshop_id', type=int, nargs='+', help='Workshop ID')
+    scp_s.set_defaults(_cmd_func=__name__ + '.cmds:cmd_workshop_unfavorite')

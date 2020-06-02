@@ -59,7 +59,11 @@ Command list
     workshop            Search and download workshop items
     |- search             Search the workshop
     |- info               Get all details for a workshop item
-    \- download           Download a workshop item
+    |- download           Download a workshop item
+    |- subscribe          Subscribe to workshop items
+    |- unsubscribe        Unsubscribe to workshop items
+    |- favorite           Favourite workshop items
+    \- unfavorite         Unfavourite workshop items
 
 Previews
 --------
