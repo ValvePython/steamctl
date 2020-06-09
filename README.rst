@@ -1,4 +1,5 @@
-|pypi| |pypipy| |license|
+| |pypi| |pypipy| |license|
+| |sonar_maintainability| |sonar_reliability| |sonar_security|
 
 Take control of Steam from your terminal
 
@@ -109,3 +110,15 @@ Previews
 .. |license| image:: https://img.shields.io/pypi/l/steamctl.svg?style=flat&label=license
     :target: https://pypi.org/project/steamctl/
     :alt: MIT License
+
+.. |sonar_maintainability| image:: https://sonarcloud.io/api/project_badges/measure?project=ValvePython_steamctl&metric=sqale_rating
+    :target: https://sonarcloud.io/dashboard?id=ValvePython_steamctl
+    :alt: SonarCloud Rating
+
+.. |sonar_reliability| image:: https://sonarcloud.io/api/project_badges/measure?project=ValvePython_steamctl&metric=reliability_rating
+    :target: https://sonarcloud.io/dashboard?id=ValvePython_steamctl
+    :alt: SonarCloud Rating
+
+.. |sonar_security| image:: https://sonarcloud.io/api/project_badges/measure?project=ValvePython_steamctl&metric=security_rating
+    :target: https://sonarcloud.io/dashboard?id=ValvePython_steamctl
+    :alt: SonarCloud Rating
