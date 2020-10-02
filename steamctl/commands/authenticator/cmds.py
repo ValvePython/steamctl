@@ -1,6 +1,8 @@
 
 import logging
 from getpass import getpass
+from time import time
+from base64 import b64decode
 from steamctl import __appname__
 from steamctl.utils.storage import UserDataFile, UserDataDirectory
 from steamctl.utils.prompt import pmt_confirmation, pmt_input
@@ -19,7 +21,7 @@ class BetterMWA(webauth.MobileWebAuth):
     def __init__(self, username):
         webauth.MobileWebAuth.__init__(self, username)
 
-    def bcli_login(self, password=None, sa_instance=None):
+    def bcli_login(self, password=None, auto_twofactor=False, sa_instance=None):
         email_code = twofactor_code = ''
 
         while True:
@@ -29,6 +31,9 @@ class BetterMWA(webauth.MobileWebAuth):
                 return self.login(password, captcha, email_code, twofactor_code)
             except (webauth.LoginIncorrect, webauth.CaptchaRequired) as exp:
                 email_code = twofactor_code = ''
+
+                if auto_twofactor and sa_instance:
+                    twofactor_code = sa_instance.get_code()
 
                 if isinstance(exp, webauth.LoginIncorrect):
                     prompt = ("Enter password for %s: " if not password else
@@ -52,6 +57,10 @@ class BetterMWA(webauth.MobileWebAuth):
                           "Incorrect code. Enter email code: ")
                 email_code, twofactor_code = input(prompt), ''
             except webauth.TwoFactorCodeRequired as exp:
+                if auto_twofactor:
+                    print("Steam did not accept 2FA code")
+                    raise EOFError
+
                 if sa_instance:
                     print("Authenticator available. Leave blank to use it, or manually enter code")
 
@@ -77,30 +86,59 @@ def cmd_authenticator_add(args):
             return 1  # error
         sa = SteamAuthenticator(secrets_file.read_json())
 
-    print("To add an authenticator, first we need to login to Steam")
+    if args.from_secret:
+        secret = b64decode(args.from_secret)
+        if len(secret) != 20:
+            print("Provided secret length is not 20 bytes (got %s)" % len(secret))
+            return 1  # error
+
+        sa = SteamAuthenticator({
+            'account_name': account,
+            'shared_secret': args.from_secret,
+            'token_gid': 'Imported secret',
+            'server_time': int(time()),
+        })
+        print("To import a secret, we need to login to Steam to verify")
+    else:
+        print("To add an authenticator, first we need to login to Steam")
     print("Account name:", account)
 
     wa = BetterMWA(account)
     try:
-        wa.bcli_login(sa_instance=sa)
+        wa.bcli_login(sa_instance=sa, auto_twofactor=bool(args.from_secret))
     except (KeyboardInterrupt, EOFError):
         print("Login interrupted")
         return 1  # error
 
-    print("Login successful. Checking pre-conditions...")
+    print("Login successful. Checking status...")
 
-    sa = SteamAuthenticator(backend=wa)
+    if sa:
+        sa.backend = wa
+    else:
+        sa = SteamAuthenticator(backend=wa)
 
     status = sa.status()
     _LOG.debug("Authenticator status: %s", status)
 
-    if not status['email_validated']:
-        print("Account needs a verified email address")
-        return 1 # error
+    if args.from_secret:
+        if status['state'] == 1:
+            sa.secrets['token_gid'] = status['token_gid']
+            sa.secrets['server_time'] = status['time_created']
+            sa.secrets['state'] = status['state']
+            secrets_file.write_json(sa.secrets)
+            print("Authenticator added successfully")
+            return
+        else:
+            print("No authenticator on account, but we logged in with 2FA? This is impossible")
+            return 1  # error
 
     if status['state'] == 1:
         print("This account already has an authenticator.")
         print("You need to remove it first, before proceeding")
+        return 1 # error
+
+    if not status['email_validated']:
+        print("Account needs a verified email address")
         return 1 # error
 
     if not status['authenticator_allowed']:
@@ -248,14 +286,16 @@ def cmd_authenticator_list(args):
     for secrets_file in UserDataDirectory('authenticator').iter_files('*.json'):
         secrets = secrets_file.read_json()
         rows.append([
+            secrets_file.filename,
             secrets['account_name'],
             secrets['token_gid'],
             fmt_datetime(int(secrets['server_time']), utc=args.utc),
+            'Created via steamctl' if 'serial_number' in secrets else 'Imported from secret'
             ])
 
     if rows:
         print_table(rows,
-                    ['Account', 'Token GID', 'Created'],
+                    ['Filename', 'Account', 'Token GID', 'Created', 'Note'],
                     )
     else:
         print("No authenticators found")

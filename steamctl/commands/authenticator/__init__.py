@@ -23,6 +23,9 @@ def cmd_parser(cp):
     scp.add_argument('--force', action='store_true',
                      help='Overwrite existing authenticator.'
                      )
+    scp.add_argument('--from-secret', type=str,
+                     help='Provide the authenticator secret directly. Need to be base64 encoded.'
+                     )
     scp.add_argument('account', type=str, help='Account name')
     scp.set_defaults(_cmd_func=__name__ + '.cmds:cmd_authenticator_add')
 
