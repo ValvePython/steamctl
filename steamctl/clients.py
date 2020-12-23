@@ -98,6 +98,10 @@ class CachingSteamClient(SteamClient):
             lastFile.write_text(self.username)
 
         self._LOG.debug("Login result is: %s", repr(EResult(result)))
+
+        if not self.relogin_available:
+            self.wait_event(self.EVENT_NEW_LOGIN_KEY, timeout=10)
+
         return result
 
 
