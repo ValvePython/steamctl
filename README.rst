@@ -25,7 +25,7 @@ Command list
 
     assistant           Helpful automation
     |- idle-cards         Automatic idling for game cards
-    \- and more...
+    \- discovery-queue    Explore a single discovery queue
 
     authenticator       Manage Steam authenticators
     |- add                Add authentictor to a Steam account

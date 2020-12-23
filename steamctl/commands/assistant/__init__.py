@@ -20,3 +20,6 @@ def cmd_parser(cp):
 
     scp_i = sub_cp.add_parser("idle-cards", help="Automatic idling for game cards")
     scp_i.set_defaults(_cmd_func=__name__ + '.card_idler:cmd_assistant_idle_cards')
+
+    scp_i = sub_cp.add_parser("discovery-queue", help="Explore a single discovery queue")
+    scp_i.set_defaults(_cmd_func=__name__ + '.discovery_queue:cmd_assistant_discovery_queue')
