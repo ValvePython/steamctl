@@ -158,6 +158,7 @@ def cmd_assistant_idle_cards(args):
 
             s.wakeup.clear()
 
+            # wait out any active sessions
             if s.playing_blocked.is_set():
                 LOG.info("Another Steam session is playing right now. Waiting for it to finish...")
                 s.wakeup.wait(timeout=3600)
@@ -201,9 +202,45 @@ def cmd_assistant_idle_cards(args):
                     break
 
 
+def cmd_assistant_idle_games(args):
+    with init_client(args) as s:
+        while True:
+            # ensure we are connected and logged in
+            if not s.connected:
+                s.reconnect()
+                continue
 
+            if not s.logged_on:
+                if not s.relogin_available:
+                    return 1 # error
 
+                result = s.relogin()
 
+                if result != EResult.OK:
+                    LOG.warning("Login failed: %s", repr(EResult(result)))
+
+                continue
+
+            s.wakeup.clear()
+
+            # wait out any active sessions
+            if s.playing_blocked.is_set():
+                LOG.info("Another Steam session is playing right now. Waiting for it to finish...")
+                s.wakeup.wait(timeout=3600)
+                continue
+
+            # check requested app ids against the license list
+            app_ids = args.app_ids
+            # TODO
+
+            # idle games
+            LOG.info("Idling apps: %s", ', '.join(map(str, app_ids)))
+            s.games_played(app_ids)
+            s.playing_blocked.wait(timeout=2)
+            s.wakeup.clear()
+            s.wakeup.wait()
+            s.games_played([])
+            s.sleep(1)
 
 
 

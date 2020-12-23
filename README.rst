@@ -24,6 +24,7 @@ Command list
 .. code:: text
 
     assistant           Helpful automation
+    |- idle-games         Idle up to 32 games for game time
     |- idle-cards         Automatic idling for game cards
     \- discovery-queue    Explore a single discovery queue
 

@@ -18,6 +18,10 @@ def cmd_parser(cp):
                                description='',
                                )
 
+    scp_i = sub_cp.add_parser("idle-games", help="Idle up to 32 games for game time")
+    scp_i.set_defaults(_cmd_func=__name__ + '.card_idler:cmd_assistant_idle_games')
+    scp_i.add_argument('app_ids', nargs='+', metavar='AppID', type=int, help='App ID(s) to idle')
+
     scp_i = sub_cp.add_parser("idle-cards", help="Automatic idling for game cards")
     scp_i.set_defaults(_cmd_func=__name__ + '.card_idler:cmd_assistant_idle_cards')
 
