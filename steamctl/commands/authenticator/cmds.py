@@ -316,6 +316,9 @@ def cmd_authenticator_status(args):
         print("Login interrupted")
         return 1  # error
 
+    if sa is None:
+        sa = SteamAuthenticator(backend=wa)
+
     status = sa.status()
 
     print("----- Status ------------")
