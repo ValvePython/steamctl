@@ -342,6 +342,9 @@ def cmd_authenticator_status(args):
         print("----- Token details -----")
         print("Token GID:", status['token_gid'])
         print("Created at:", fmt_datetime(status['time_created']))
+        print("Device identifier:", status['device_identifier'])
+        print("Classified agent:", status['classified_agent'])
+        print("Revocation attempts remaining:", status['revocation_attempts_remaining'])
 
 def cmd_authenticator_code(args):
     account = args.account.lower().strip()
