@@ -1,6 +1,9 @@
 | |pypi| |pypipy| |license|
 | |sonar_maintainability| |sonar_reliability| |sonar_security|
 
+steamctl
+--------
+
 Take control of Steam from your terminal
 
 Install
