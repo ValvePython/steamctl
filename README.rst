@@ -23,6 +23,10 @@ Command list
 
 .. code:: text
 
+    apps
+    |- list_names       List all public apps and their names
+    \- product_info     Show product info about an app
+
     assistant           Helpful automation
     |- idle-games         Idle up to 32 games for game time
     |- idle-cards         Automatic idling for game cards

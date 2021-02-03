@@ -8,6 +8,7 @@ import argcomplete
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
 
+import steamctl.commands.apps
 import steamctl.commands.assistant
 import steamctl.commands.authenticator
 import steamctl.commands.depot
