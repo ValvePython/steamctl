@@ -77,34 +77,34 @@ Command list
 Previews
 --------
 
-``steamctl authenticator`` (no root required)
+``steamctl authenticator`` (No root required, and transferable token. Steamapp, steamctl, and aegis, with the same token)
 
 .. image:: https://raw.githubusercontent.com/ValvePython/steamctl/master/preview_authenticator.jpg
     :alt: preview: steamctl authenticator
 
-``steamctl depot``
+(video) ``steamctl depot``
 
 .. image:: https://asciinema.org/a/323966.png
     :target: https://asciinema.org/a/323966
-    :alt: preview: steamctl depot
+    :alt: asciinema preview: steamctl depot
 
-``steamctl workshop``
+(video) ``steamctl workshop``
 
 .. image:: https://asciinema.org/a/253277.png
     :target: https://asciinema.org/a/253277
-    :alt: preview: steamctl workshop
+    :alt: asciinema preview: steamctl workshop
 
-``steamctl webapi``
+(video) ``steamctl webapi``
 
 .. image:: https://asciinema.org/a/323976.png
     :target: https://asciinema.org/a/323976
-    :alt: preview: steamctl workshop
+    :alt: asciinema preview: steamctl workshop
 
-``steamctl hlmaster``
+(video) ``steamctl hlmaster``
 
 .. image:: https://asciinema.org/a/253275.png
     :target: https://asciinema.org/a/253275
-    :alt: preview: steamctl hlmaster
+    :alt: asciinema preview: steamctl hlmaster
 
 
 
