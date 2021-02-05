@@ -4,7 +4,7 @@
 steamctl
 --------
 
-Take control of Steam from your terminal
+`steamctl` is an opensource CLI utility smiliar to `steamcmd`. It provies access to a number of Steam features and data from the command line. While it is possible to download apps and conntent from Steam, `steamctl` is not a game launcher. 
 
 Install
 -------
