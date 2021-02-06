@@ -42,6 +42,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     keywords='steam steamctl steamid steamcommunity authenticator workshop',
     packages=['steamctl'] + ['steamctl.'+x for x in find_packages(where='steamctl')],
