@@ -104,6 +104,74 @@ class CachingSteamClient(SteamClient):
 
         return result
 
+    def check_for_changes(self):
+        """Check for changes since last check, and expire any cached appinfo"""
+        changefile = UserCacheFile('last_change_number')
+        change_number = 0
+
+        if changefile.exists():
+            try:
+                change_number = int(changefile.read_text())
+            except:
+                changefile.remove()
+
+        self._LOG.debug("Checking PICS for app changes")
+        resp = self.get_changes_since(change_number, True, False)
+
+        if resp.force_full_app_update:
+            change_number = 0
+
+        if resp.current_change_number != change_number:
+            with changefile.open('w') as fp:
+                fp.write(str(resp.current_change_number))
+
+            changed_apps = set((entry.appid for entry in resp.app_changes))
+
+            if change_number == 0 or changed_apps:
+                self._LOG.debug("Checking for outdated cached appinfo files")
+
+                for appinfo_file in UserCacheDirectory('appinfo').iter_files('*.json'):
+                    app_id = int(appinfo_file.filename[:-5])
+
+                    if change_number == 0 or app_id in changed_apps:
+                        appinfo_file.remove()
+
+    def has_cached_appinfo(self, app_id):
+        return UserCacheFile("appinfo/{}.json".format(app_id)).exists()
+
+    def get_cached_appinfo(self, app_id):
+        cache_file = UserCacheFile("appinfo/{}.json".format(app_id))
+
+        if cache_file.exists():
+            return cache_file.read_json()
+
+    def get_product_info(self, apps=[], packages=[], *args, **kwargs):
+        resp = {'apps': {}, 'packages': {}}
+
+        # if we have cached info for all apps, just serve from cache
+        if apps and all(map(self.has_cached_appinfo, apps)):
+            self._LOG.debug("Serving appinfo from cache")
+
+            for app_id in apps:
+                resp['apps'][app_id] = self.get_cached_appinfo(app_id)
+
+            apps = []
+
+        if apps or packages:
+            self._LOG.debug("Fetching product info")
+            fresh_resp = SteamClient.get_product_info(self, apps, packages, *args, **kwargs)
+
+            if apps:
+                for app_id, appinfo in fresh_resp['apps'].items():
+                    if not appinfo['_missing_token']:
+                        UserCacheFile("appinfo/{}.json".format(app_id)).write_json(appinfo)
+                resp = fresh_resp
+            else:
+                resp['packages'] = fresh_resp['packages']
+
+        return resp
+
+
 
 class CTLDepotFile(CDNDepotFile):
     _LOG = logging.getLogger('CTLDepotFile')
@@ -224,52 +292,6 @@ class CachingCDNClient(CDNClient):
 
         UserDataFile('depot_keys.json').write_json(out)
 
-    def check_for_changes(self):
-        changefile = UserCacheFile('last_change_number')
-        change_number = 0
-
-        if changefile.exists():
-            try:
-                change_number = int(changefile.read_text())
-            except:
-                changefile.remove()
-
-        self._LOG.debug("Checking PICS for app changes")
-        resp = self.steam.get_changes_since(change_number, True, False)
-
-        if resp.force_full_app_update:
-            change_number = 0
-
-        if resp.current_change_number != change_number:
-            with changefile.open('w') as fp:
-                fp.write(str(resp.current_change_number))
-
-            changed_apps = set((entry.appid for entry in resp.app_changes))
-
-            if change_number == 0 or changed_apps:
-                self._LOG.debug("Checking for outdated cached appinfo files")
-
-                for appinfo_file in UserCacheDirectory('appinfo').iter_files('*.json'):
-                    app_id = int(appinfo_file.filename[:-5])
-
-                    if change_number == 0 or app_id in changed_apps:
-                        appinfo_file.remove()
-
-    def get_app_access_token(self, app_id):
-        tokens = self.steam.get_access_tokens([app_id])
-
-        if not tokens:
-            self._LOG.debug("Access token request time out")
-            return
-
-        try:
-            token = tokens['apps'][app_id]
-        except KeyError:
-            pass
-        else:
-            self._LOG.debug("Got access token %s for app %s", repr(token), app_id)
-            return token
-
     def has_cached_app_depot_info(self, app_id):
         if app_id in self.app_depots:
             return True
@@ -280,28 +302,13 @@ class CachingCDNClient(CDNClient):
 
     def get_app_depot_info(self, app_id):
         if app_id not in self.app_depots:
-            cached_appinfo = UserCacheFile("appinfo/{}.json".format(app_id))
-            appinfo = None
+            try:
+                appinfo = self.steam.get_product_info([app_id])['apps'][app_id]
+            except KeyError:
+                raise SteamError("Invalid app id")
 
-            if cached_appinfo.exists():
-                appinfo = cached_appinfo.read_json()
-
-            if not appinfo:
-                app_req = {'appid': app_id}
-                token = self.get_app_access_token(app_id)
-
-                if token:
-                    app_req['access_token'] = token
-
-                try:
-                    appinfo = self.steam.get_product_info([app_req])['apps'][app_id]
-                except KeyError:
-                    raise SteamError("Invalid app id")
-
-                if appinfo['_missing_token']:
-                    raise SteamError("No access token available")
-
-                cached_appinfo.write_json(appinfo)
+            if appinfo['_missing_token']:
+                raise SteamError("No access token available")
 
             self.app_depots[app_id] = appinfo.get('depots', {})
 

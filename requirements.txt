@@ -1,4 +1,4 @@
-steam[client]>=1.0.2,<2.0
+steam[client]~=1.2
 appdirs
 argcomplete
 tqdm

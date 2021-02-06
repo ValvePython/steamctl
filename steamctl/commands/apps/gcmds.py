@@ -25,6 +25,7 @@ def init_client(args):
 
 def cmd_apps_product_info(args):
     with init_client(args) as s:
+        s.check_for_changes()
         data = s.get_product_info(apps=args.app_ids)
 
         if not data:
@@ -34,6 +35,5 @@ def cmd_apps_product_info(args):
         data = data['apps']
 
         for k, v in data.items():
-            v['_sha'] = hexlify(v['_sha']).decode('ascii')
             json.dump(v, sys.stdout, indent=4, sort_keys=True)
 

@@ -182,7 +182,7 @@ def init_clients(args):
         # check if we need to invalidate the cache data
         if not args.skip_login:
             LOG.info("Checking change list")
-            cdn.check_for_changes()
+            s.check_for_changes()
 
         # handle any filtering on depot list
         def depot_filter(depot_id, info):
@@ -268,6 +268,7 @@ def cmd_depot_info(args):
                         if 'dlcappid' in depot_info:
                             print("DLC AppID:", depot_info['dlcappid'])
 
+                        print("Branch:", args.branch)
                         print("Open branches:", ', '.join(depot_info.get('manifests', {}).keys()))
                         print("Protected branches:", ', '.join(depot_info.get('encryptedmanifests', {}).keys()))
 
