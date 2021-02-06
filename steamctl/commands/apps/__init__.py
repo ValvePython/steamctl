@@ -26,9 +26,10 @@ def cmd_parser(cp):
                                description='',
                                )
 
-    # ---- list_names
-    scp_l = sub_cp.add_parser("list_names", help="List all public apps and their names")
-    scp_l.set_defaults(_cmd_func=__name__ + '.cmds:cmd_apps_list_names')
+    # ---- list
+    scp_l = sub_cp.add_parser("list", help="List owned apps")
+    scp_l.add_argument('--all', action='store_true', help='List all apps on Steam')
+    scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_list')
 
     # ---- product_info
     scp_l = sub_cp.add_parser("product_info", help="Show product info about an app")
