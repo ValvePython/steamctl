@@ -243,12 +243,10 @@ class CTLDepotManifest(CDNDepotManifest):
 class CachingCDNClient(CDNClient):
     DepotManifestClass = CTLDepotManifest
     _LOG = logging.getLogger('CachingCDNClient')
+    _depot_keys = None
 
     def __init__(self, *args, **kwargs):
         CDNClient.__init__(self, *args, **kwargs)
-
-        # load the cached depot decryption keys
-        self.depot_keys.update(self.get_cached_depot_keys())
 
     def fetch_content_servers(self, *args, **kwargs):
         cached_cs = UserDataFile('cs_servers.json')
@@ -274,6 +272,16 @@ class CachingCDNClient(CDNClient):
         }
 
         cached_cs.write_json(data)
+
+    @property
+    def depot_keys(self):
+        if not self._depot_keys:
+            self._depot_keys.update(self.get_cached_depot_keys())
+        return self._depot_keys
+
+    @depot_keys.setter
+    def depot_keys(self, value):
+        self._depot_keys = value
 
     def get_cached_depot_keys(self):
         return {int(depot_id): bytes.fromhex(key)
