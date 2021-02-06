@@ -5,7 +5,7 @@ gevent.monkey.patch_ssl()
 import os
 import logging
 from time import time
-from steam.enums import EResult
+from steam.enums import EResult, EPersonaState
 from steam.client import SteamClient
 from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile, ContentServer
 from steam.exceptions import SteamError
@@ -21,6 +21,7 @@ cred_dir = UserDataDirectory('client')
 
 class CachingSteamClient(SteamClient):
     credential_location = cred_dir.path
+    persona_state = EPersonaState.Offline
 
     def __init__(self, *args, **kwargs):
         if not cred_dir.exists():
