@@ -27,7 +27,7 @@ Command list
 .. code:: text
 
     apps
-    |- list_names       List all public apps and their names
+    |- list             List owned apps
     \- product_info     Show product info about an app
 
     assistant           Helpful automation
