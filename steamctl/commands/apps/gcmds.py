@@ -26,6 +26,19 @@ def init_client(args):
 def cmd_apps_product_info(args):
     with init_client(args) as s:
         s.check_for_changes()
+
+        if not args.skip_licenses:
+            if not s.licenses and s.steam_id.type != s.steam_id.EType.AnonUser:
+                s.wait_event(EMsg.ClientLicenseList, raises=False, timeout=10)
+
+            cdn = s.get_cdnclient()
+            cdn.load_licenses()
+
+            for app_id in args.app_ids:
+                if app_id not in cdn.licensed_app_ids:
+                    LOG.error("No license available for App ID: %s (%s)", app_id, EResult.AccessDenied)
+                    return 1  #error
+
         data = s.get_product_info(apps=args.app_ids)
 
         if not data:
