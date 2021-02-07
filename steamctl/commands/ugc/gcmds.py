@@ -10,6 +10,7 @@ import logging
 from io import open
 from contextlib import contextmanager
 from steam import webapi
+from steam.exceptions import SteamError
 from steam.client import EResult, EMsg, MsgProto, SteamID
 from steamctl.clients import CachingSteamClient
 from steamctl.utils.storage import ensure_dir, sanitizerelpath
@@ -26,14 +27,12 @@ LOG = logging.getLogger(__name__)
 class UGCSteamClient(CachingSteamClient):
     def get_ugc_details(self, ugc_id):
         if 0 > ugc_id > 2**64:
-            LOG.error("Invalid UGC value")
-            return
+            raise SteamError("Invalid UGC ID")
 
         result = self.send_job_and_wait(MsgProto(EMsg.ClientUFSGetUGCDetails), {'hcontent': ugc_id}, timeout=5)
 
         if not result or result.eresult != EResult.OK:
-            LOG.error("Result: %r", EResult(result.eresult) if result else EResult.Timeout)
-            return
+            raise SteamError("Failed getting UGC details", EResult(result.eresult) if result else EResult.Timeout)
 
         return result
 

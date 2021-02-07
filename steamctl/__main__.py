@@ -51,6 +51,20 @@ def main():
         except KeyboardInterrupt:
             _LOG.debug('Interrupted with KeyboardInterrupt')
             rcode = 1
+        except Exception as exp:
+            from steam.exceptions import SteamError
+
+            if isinstance(exp, SteamError):
+                if args.log_level == 'debug':
+                    _LOG.exception(exp)
+                else:
+                    _LOG.error(str(exp))
+
+                rcode = 1
+
+            # unhandled exceptions
+            else:
+                raise
     else:
         _LOG.debug('_cmd_func attribute is missing')
         rcode = 1
