@@ -11,6 +11,7 @@ from steamctl.argparser import generate_parser, nested_print_usage
 import steamctl.commands.apps
 import steamctl.commands.assistant
 import steamctl.commands.authenticator
+import steamctl.commands.cloud
 import steamctl.commands.depot
 import steamctl.commands.hlmaster
 import steamctl.commands.steamid

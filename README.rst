@@ -43,6 +43,9 @@ Command list
     |- code               Generate auth code
     \- qrcode             Generate QR code
 
+    cloud               Manage Steam Cloud files (e.g. save files, settings, etc)
+    \- list               List files for app
+
     depot               List and download from Steam depots
     |- info               View info about a depot(s)
     |- list               List files from depot(s)
