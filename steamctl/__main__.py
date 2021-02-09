@@ -3,33 +3,38 @@ from __future__ import print_function
 
 import sys
 import logging
+import pkgutil
+import importlib
 import argcomplete
 
+import steamctl.commands
 from steamctl import __appname__
 from steamctl.argparser import generate_parser, nested_print_usage
-
-import steamctl.commands.apps
-import steamctl.commands.assistant
-import steamctl.commands.authenticator
-import steamctl.commands.cloud
-import steamctl.commands.depot
-import steamctl.commands.hlmaster
-import steamctl.commands.steamid
-import steamctl.commands.ugc
-import steamctl.commands.webapi
-import steamctl.commands.workshop
 
 _LOG = logging.getLogger(__appname__)
 
 def main():
+    # setup login config, before loading subparsers
     parser = generate_parser()
-    argcomplete.autocomplete(parser)
-    args, unknown_args = parser.parse_known_args()
+    args, _ = parser.parse_known_args()
 
     logging.basicConfig(
         format='[%(levelname)s] %(name)s: %(message)s' if args.log_level == 'debug' else '[%(levelname)s] %(message)s',
         level=100 if args.log_level == 'quiet' else getattr(logging, args.log_level.upper())
         )
+
+    # load subcommands
+    for _, modname, ispkg in pkgutil.iter_modules(steamctl.commands.__path__):
+        if ispkg:
+            try:
+                importlib.import_module('steamctl.commands.' + modname)
+            except ImportError as exp:
+                _LOG.error(str(exp))
+
+    # reload parser, and enable auto completion
+    parser = generate_parser()
+    argcomplete.autocomplete(parser)
+    args, unknown_args = parser.parse_known_args()
 
     if unknown_args:
         _LOG.debug("Unknown args: %s", unknown_args)
@@ -37,8 +42,10 @@ def main():
         print("%s: unrecognized arguments: %s" % (parser.prog, ' '.join(unknown_args)), file=sys.stderr)
         sys.exit(1)
 
+    # process subcommand
     cmd_func = args._cmd_func
 
+    # attempt to load submodule where the subcommand is located
     if isinstance(cmd_func, str):
         from importlib import import_module
         subpkg, func = cmd_func.split(':', 1)
@@ -46,6 +53,7 @@ def main():
 
     _LOG.debug("Parsed args: %s", vars(args))
 
+    # execute subcommand
     if cmd_func:
         try:
             rcode = cmd_func(args=args)
@@ -70,6 +78,7 @@ def main():
         _LOG.debug('_cmd_func attribute is missing')
         rcode = 1
 
+    # ensure that we always output an appropriet return code
     if rcode is not None:
         sys.exit(rcode)
 

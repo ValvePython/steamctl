@@ -49,22 +49,23 @@ def generate_parser():
     parser.add_argument('--user', type=str, help='Username for Steam login')
     parser.set_defaults(_cmd_func=print_help)
 
-    subparsers = parser.add_subparsers(
-                            metavar='<command>',
-                            dest='command',
-                            title='List of commands',
-                            description='',
-                            )
+    if _subcommands:
+        subparsers = parser.add_subparsers(
+                                metavar='<command>',
+                                dest='command',
+                                title='List of commands',
+                                description='',
+                                )
 
-    for subcommand, (func, kwargs) in sorted(_subcommands.items(), key=lambda x: x[0]):
-        # lets description and epilog maintain identation
-        kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
+        for subcommand, (func, kwargs) in sorted(_subcommands.items(), key=lambda x: x[0]):
+            # lets description and epilog maintain identation
+            kwargs.setdefault('formatter_class', argparse.RawDescriptionHelpFormatter)
 
-        if '{prog}' in kwargs.get('epilog', ''):
-            kwargs['epilog'] = kwargs['epilog'].format(prog=parser.prog)
+            if '{prog}' in kwargs.get('epilog', ''):
+                kwargs['epilog'] = kwargs['epilog'].format(prog=parser.prog)
 
-        sp = subparsers.add_parser(subcommand, **kwargs)
-        func(sp)
+            sp = subparsers.add_parser(subcommand, **kwargs)
+            func(sp)
 
     return parser
 
