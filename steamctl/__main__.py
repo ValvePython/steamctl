@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__appname__)
 
 def main():
     # setup login config, before loading subparsers
-    parser = generate_parser()
+    parser = generate_parser(pre=True)
     args, _ = parser.parse_known_args()
 
     logging.basicConfig(

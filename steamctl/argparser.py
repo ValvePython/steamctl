@@ -33,18 +33,33 @@ def register_command(command, **kwargs):
 
     return func_wrap
 
-def generate_parser():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=epilog,
-        )
-    parser.prog = __appname__
+def generate_parser(pre=False):
+    # pre parser only handles a couple of arguements to handle basics
+    # full parse is generated once all modules have been loaded
+    if pre:
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            add_help=False,
+            )
+    else:
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=epilog,
+            )
 
-    def print_help(*args, **kwargs):
-        parser.print_help()
+    parser.prog = __appname__
 
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
     parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
+
+    # return pre parser
+    if pre:
+        return parser
+
+    # fully configure argument parser from here on
+    def print_help(*args, **kwargs):
+        parser.print_help()
+
     parser.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')
     parser.add_argument('--user', type=str, help='Username for Steam login')
     parser.set_defaults(_cmd_func=print_help)
