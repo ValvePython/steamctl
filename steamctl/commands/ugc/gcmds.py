@@ -81,15 +81,15 @@ def download_via_url(args, url, filename):
 
     with open(filepath, 'wb') as fp:
         if not args.no_progress and sys.stderr.isatty():
-            pbar = tqdm(total=total_size, unit='B', unit_scale=True)
+            pbar = tqdm(total=total_size, mininterval=0.5, maxinterval=1, miniters=1024**3*10, unit='B', unit_scale=True)
             gevent.spawn(pbar.gevent_refresh_loop)
         else:
             pbar = fake_tqdm()
 
-        LOG.info('Downloading to {} ({})'.format(
-                    relpath,
-                    fmt_size(total_size) if total_size else 'Unknown size',
-                    ))
+#       LOG.info('Downloading to {} ({})'.format(
+#                   relpath,
+#                   fmt_size(total_size) if total_size else 'Unknown size',
+#                   ))
 
         for chunk in iter(lambda: fstream.raw.read(8388608), b''):
             fp.write(chunk)

@@ -100,7 +100,7 @@ def download_via_steampipe(args, pubfile):
     LOG.info("File manifest acquired")
 
     if not args.no_progress and sys.stderr.isatty():
-        pbar = tqdm(total=manifest.size_original, unit='B', unit_scale=True)
+        pbar = tqdm(total=manifest.size_original, mininterval=0.5, maxinterval=1, miniters=1024**3*10, unit='B', unit_scale=True)
         gevent.spawn(pbar.gevent_refresh_loop)
     else:
         pbar = fake_tqdm()

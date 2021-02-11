@@ -204,12 +204,12 @@ class CTLDepotFile(CDNDepotFile):
                 if newsize != self.size:
                     raise SteamError("Failed allocating space for {}".format(filepath))
 
-            self._LOG.info('{} {}  ({}, sha1:{})'.format(
-                               'Verifying' if verify else 'Downloading',
-                               relpath,
-                               fmt_size(self.size),
-                               checksum
-                               ))
+#           self._LOG.info('{} {}  ({}, sha1:{})'.format(
+#                              'Verifying' if verify else 'Downloading',
+#                              relpath,
+#                              fmt_size(self.size),
+#                              checksum
+#                              ))
 
             fp.seek(0)
             for chunk in self.chunks:

@@ -445,8 +445,8 @@ def cmd_depot_download(args):
 
             # enable progress bar
             if not args.no_progress and sys.stderr.isatty():
-                pbar = tqdm(desc='Data ', mininterval=0.5, maxinterval=1, total=total_size, unit='B', unit_scale=True)
-                pbar2 = tqdm(desc='Files', mininterval=0.5, maxinterval=1, total=total_files, position=1, unit=' file', unit_scale=False)
+                pbar = tqdm(desc='Data ', mininterval=0.5, maxinterval=1, miniters=1024**3*10, total=total_size, unit='B', unit_scale=True)
+                pbar2 = tqdm(desc='Files', mininterval=0.5, maxinterval=1, miniters=10, total=total_files, position=1, unit=' file', unit_scale=False)
                 gevent.spawn(pbar.gevent_refresh_loop)
                 gevent.spawn(pbar2.gevent_refresh_loop)
 
@@ -587,7 +587,7 @@ def cmd_depot_diff(args):
                         size = os.path.getsize(full_filepath)
 
                         if size != mfile.size:
-                            print("Mismatch (size differ):", full_filepath)
+                            print("Mismatch (size):", full_filepath)
                             continue
 
                         # valve sets the checksum for empty files to all nulls
@@ -597,7 +597,7 @@ def cmd_depot_diff(args):
                             chucksum = calc_sha1_for_file(full_filepath)
 
                         if chucksum != mfile.file_mapping.sha_content:
-                            print("Mismatch (checksum differ):", full_filepath)
+                            print("Mismatch (checksum):", full_filepath)
 
                     elif not args.hide_missing:
                         print("Missing file:", full_filepath)
