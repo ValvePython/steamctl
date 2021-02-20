@@ -78,6 +78,8 @@ def generate_parser(pre=False):
 
             if '{prog}' in kwargs.get('epilog', ''):
                 kwargs['epilog'] = kwargs['epilog'].format(prog=parser.prog)
+            if 'description' not in kwargs:
+                kwargs['description'] = kwargs['help']
 
             sp = subparsers.add_parser(subcommand, **kwargs)
             func(sp)
