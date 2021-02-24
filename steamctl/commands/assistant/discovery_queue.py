@@ -62,9 +62,14 @@ def cmd_assistant_discovery_queue(args):
         sessionid = web.cookies.get('sessionid', domain='store.steampowered.com')
 
         LOG.info("Generating new discovery queue...")
-        data = web.post('https://store.steampowered.com/explore/generatenewdiscoveryqueue', {'sessionid': sessionid, 'queuetype': 0}).json()
 
-        if not data.get('queue', None):
+        try:
+            data = web.post('https://store.steampowered.com/explore/generatenewdiscoveryqueue', {'sessionid': sessionid, 'queuetype': 0}).json()
+        except Exception as exp:
+            LOG.debug("Exception: %s", str(exp))
+            data = None
+
+        if not isinstance(data, dict) or not data.get('queue', None):
             LOG.error("Invalid/empty discovery response")
             return 1  # error
 
