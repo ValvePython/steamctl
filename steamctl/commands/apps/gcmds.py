@@ -6,7 +6,9 @@ gevent.monkey.patch_ssl()
 
 import sys
 import json
+import codecs
 import logging
+import functools
 from binascii import hexlify
 from contextlib import contextmanager
 from steam.exceptions import SteamError
@@ -85,3 +87,29 @@ def cmd_apps_list(args):
 
         for app_id in sorted(owned_apps):
             print(str(app_id).ljust(width), apps.get(app_id, 'Unknown App {}'.format(app_id)))
+
+
+def cmd_apps_item_def(args):
+    with init_client(args) as s:
+        resp = s.send_um_and_wait("Inventory.GetItemDefMeta#1", {'appid': args.app_id})
+
+        if resp.header.eresult != EResult.OK:
+            LOG.error("Request failed: %r", EResult(resp.header.eresult))
+            return 1  # error
+
+        digest = resp.body.digest
+
+        sess = make_requests_session()
+        resp = sess.get('https://api.steampowered.com/IGameInventory/GetItemDefArchive/v1/',
+                        params={'appid': args.app_id, 'digest': resp.body.digest},
+                        stream=True)
+
+        if resp.status_code != 200:
+            LOG.error("Request failed: HTTP %s", resp.status_code)
+            return 1  # error
+
+        resp.raw.read = functools.partial(resp.raw.read, decode_content=True)
+        reader = codecs.getreader('utf-8')(resp.raw, 'replace')
+
+        for chunk in iter(lambda: reader.read(8096), ''):
+            sys.stdout.write(chunk)
