@@ -27,17 +27,17 @@ def cmd_parser(cp):
                                )
 
     # ---- list
-    scp_l = sub_cp.add_parser("list", help="List owned apps")
+    scp_l = sub_cp.add_parser("list", help="List owned or all apps")
     scp_l.add_argument('--all', action='store_true', help='List all apps on Steam')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_list')
 
     # ---- product_info
-    scp_l = sub_cp.add_parser("product_info", help="Show product info about an app")
+    scp_l = sub_cp.add_parser("product_info", help="Show product info for app")
     scp_l.add_argument('--skip-licenses', action='store_true', help='Skip license check')
     scp_l.add_argument('app_ids', nargs='+', metavar='AppID', type=int, help='AppID to query')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_product_info')
 
     # ---- item_def
-    scp_l = sub_cp.add_parser("item_def", help="Get item definitions")
+    scp_l = sub_cp.add_parser("item_def", help="Get item definitions for app")
     scp_l.add_argument('app_id', metavar='AppID', type=int, help='AppID to query')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_item_def')

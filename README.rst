@@ -26,9 +26,10 @@ Command list
 
 .. code:: text
 
-    apps
-    |- list             List owned apps
-    \- product_info     Show product info about an app
+    apps                Get information about apps
+    |- list               List owned or all apps
+    |- product_info       Show product info for app
+    \- item_def           Get item definitions for app
 
     assistant           Helpful automation
     |- idle-games         Idle up to 32 games for game time
