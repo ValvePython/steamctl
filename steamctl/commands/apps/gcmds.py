@@ -90,8 +90,30 @@ def cmd_apps_list(args):
 
 
 def cmd_apps_item_def(args):
+    app_id = args.app_id
+
+    # special case apps
+    if app_id in (440, 570, 620, 730, 205790):
+        LOG.error("The app's item schema cannot be retrieved via this method")
+
+        if app_id == 440:
+            LOG.error("Use: steamctl webapi call IEconItems_440.GetSchemaItems")
+        if app_id == 570:
+            LOG.error("Use: steamctl webapi call IEconItems_570.GetSchemaURL")
+            LOG.error("     steamctl depot download -a 570 --vpk --name '*pak01_dir.vpk:*/items_game.txt' --no-directories -o dota_items")
+        if app_id == 620:
+            LOG.error("Use: steamctl webapi call IEconItems_620.GetSchema")
+        if app_id == 730:
+            LOG.error("Use: steamctl webapi call IEconItems_730.GetSchema")
+            LOG.error("     steamctl depot download -a 730 --regex 'items_game(_cdn)?\.txt$' --no-directories --output csgo_item_def")
+        if app_id == 205790:
+            LOG.error("Use: steamctl webapi call IEconItems_205790.GetSchemaURL")
+
+        return 1 # error
+
+    # regular case
     with init_client(args) as s:
-        resp = s.send_um_and_wait("Inventory.GetItemDefMeta#1", {'appid': args.app_id})
+        resp = s.send_um_and_wait("Inventory.GetItemDefMeta#1", {'appid': app_id})
 
         if resp.header.eresult != EResult.OK:
             LOG.error("Request failed: %r", EResult(resp.header.eresult))
@@ -101,7 +123,7 @@ def cmd_apps_item_def(args):
 
         sess = make_requests_session()
         resp = sess.get('https://api.steampowered.com/IGameInventory/GetItemDefArchive/v1/',
-                        params={'appid': args.app_id, 'digest': resp.body.digest},
+                        params={'appid': app_id, 'digest': resp.body.digest},
                         stream=True)
 
         if resp.status_code != 200:
@@ -112,4 +134,7 @@ def cmd_apps_item_def(args):
         reader = codecs.getreader('utf-8')(resp.raw, 'replace')
 
         for chunk in iter(lambda: reader.read(8096), ''):
+            if chunk[-1] == '\x00':
+                chunk = chunk[:-1]
+
             sys.stdout.write(chunk)
