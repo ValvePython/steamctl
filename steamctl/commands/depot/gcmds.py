@@ -89,11 +89,12 @@ def vpkfile_download_to(vpk_path, vpkfile, target, no_make_dirs, pbar):
     relpath = sanitizerelpath(vpkfile.filepath)
 
     if no_make_dirs:
-        relpath = os.path.basename(relpath)
-
-    relpath = os.path.join(target,         # output directory
-                           vpk_path[:-4],  # vpk path with extention (e.g. pak01_dir)
-                           relpath)        # vpk relative path
+        relpath = os.path.join(target,                     # output directory
+                               os.path.basename(relpath))  # filename from vpk
+    else:
+        relpath = os.path.join(target,         # output directory
+                               vpk_path[:-4],  # vpk path with extention (e.g. pak01_dir)
+                               relpath)        # vpk relative path
 
     filepath = os.path.abspath(relpath)
     ensure_dir(filepath)
