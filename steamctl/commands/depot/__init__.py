@@ -72,7 +72,7 @@ def cmd_parser(cp):
     scp_l.add_argument('-p', '--password', type=str, help='Branch password')
     scp_l.add_argument('--skip-login', action='store_true', help='Skip login to Steam')
     scp_l.add_argument('--skip-licenses', action='store_true', help='Skip checking for licenses')
-    scp_l.add_argument('-l', '--long', action='store_true', help='Shows extra info for every file')
+    scp_l.add_argument('--long', action='store_true', help='Shows extra info for every file')
     scp_l.add_argument('--vpk', action='store_true', help='Include files inside VPK files')
     fexcl = scp_l.add_mutually_exclusive_group()
     fexcl.add_argument('-n', '--name', type=str, help='Wildcard for matching filepath')

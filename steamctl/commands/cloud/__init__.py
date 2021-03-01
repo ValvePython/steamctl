@@ -34,7 +34,7 @@ def cmd_parser(cp):
                                )
 
     scp_l = sub_cp.add_parser("list", help="List files for app")
-    scp_l.add_argument('-l', '--long', action='store_true', help='Shows extra info for every file')
+    scp_l.add_argument('--long', action='store_true', help='Shows extra info for every file')
 #   fexcl = scp_l.add_mutually_exclusive_group()
 #   fexcl.add_argument('-n', '--name', type=str, help='Wildcard for matching filepath')
 #   fexcl.add_argument('-re', '--regex', type=str, help='Reguar expression for matching filepath')
