@@ -44,6 +44,11 @@ Command list
     |- code               Generate auth code
     \- qrcode             Generate QR code
 
+    clear               Remove data stored on disk
+    |- cache              Remove all cache and data files
+    |- credentials        Remove all credentials and saved logins
+    \- all                Remove all cache files
+
     cloud               Manage Steam Cloud files (e.g. save files, settings, etc)
     |- list               List files for app
     \- download           Download files for app

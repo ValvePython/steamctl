@@ -7,6 +7,7 @@ from time import time
 from io import open
 from contextlib import contextmanager
 import fnmatch
+import shutil
 from appdirs import AppDirs
 from steamctl import __appname__
 
@@ -35,7 +36,7 @@ class FileBase(object):
     def __init__(self, relpath, mode='r'):
         self.mode = mode
         self.relpath = relpath
-        self.path = os.path.join(self._root_path, relpath)
+        self.path = normpath(os.path.join(self._root_path, relpath))
         self.filename = os.path.basename(self.path)
 
     def __repr__(self):
@@ -103,7 +104,7 @@ class DirectoryBase(object):
     _file_type = None
 
     def __init__(self, path='.'):
-        self.path = os.path.join(self._root_path, path)
+        self.path = normpath(os.path.join(self._root_path, path))
 
         if self.exists() and not os.path.isdir(self.path):
             raise ValueError("Path is not a directory: %s" % self.path)
@@ -113,6 +114,10 @@ class DirectoryBase(object):
 
     def exists(self):
         return os.path.exists(self.path)
+
+    def remove(self):
+        _LOG.debug("Removing directory: %s", self.path)
+        shutil.rmtree(self.path)
 
     def iter_files(self, pattern=None):
         if not os.path.exists(self.path):
