@@ -19,12 +19,12 @@ def cmd_clear_cache(args):
 def cmd_clear_credentials(args):
     _LOG.debug("Removing all stored credentials")
 
-    data_dir = UserDataDirectory()
+    data_dir = UserDataDirectory('client')
 
     for entry in data_dir.iter_files('*.key'):
-        entry.remove()
+        entry.secure_remove()
     for entry in data_dir.iter_files('*_sentry.bin'):
-        entry.remove()
+        entry.secure_remove()
 
 def cmd_clear_all(args):
     _LOG.debug("Removing all files stored by this application")

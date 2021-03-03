@@ -86,6 +86,25 @@ class FileBase(object):
         if self.exists():
             os.remove(self.path)
 
+    def secure_remove(self):
+        _LOG.debug("Securely removing file: %s", self.path)
+
+        if self.exists():
+            with open(self.path, 'r+b') as fp:
+                size = fp.seek(0, 2)
+
+                fp.seek(0)
+                chunk = b'0' * 4096
+
+                while fp.tell() + 4096 < size:
+                    fp.write(chunk)
+                fp.write(chunk[:max(size - fp.tell(), 0)])
+
+                fp.flush()
+                os.fsync(fp.fileno())
+
+            os.remove(self.path)
+
     def __enter__(self):
         self._fp = self.open(self.mode)
         return self._fp
@@ -119,14 +138,18 @@ class DirectoryBase(object):
         _LOG.debug("Removing directory: %s", self.path)
         shutil.rmtree(self.path)
 
-    def iter_files(self, pattern=None):
+    def iter_files(self, pattern=None, recurse=False):
         if not os.path.exists(self.path):
             return
 
         for root, dirs, files in os.walk(self.path):
+            if not recurse and self.path != root:
+                break
+
             if pattern:
                 files =  fnmatch.filter(files, pattern)
-            yield from (self._file_type(os.path.join(self.path, filename)) for filename in files)
+
+            yield from (self._file_type(os.path.join(root, filename)) for filename in files)
 
 class UserDataDirectory(DirectoryBase):
     _root_path = _appdirs.user_data_dir
