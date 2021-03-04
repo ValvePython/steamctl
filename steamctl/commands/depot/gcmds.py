@@ -220,7 +220,9 @@ def init_clients(args):
         # enumerate manifests
         manifests = []
         for manifest in cdn.get_manifests(args.app, branch=branch, password=password, filter_func=depot_filter, decrypt=False):
-            if not args.skip_licenses and manifest.depot_id not in cdn.licensed_depot_ids:
+            if (not args.skip_licenses
+               and manifest.depot_id not in cdn.licensed_depot_ids
+               and manifest.depot_id not in cdn.licensed_app_ids):
                 LOG.error("No license for depot: %r" % manifest)
                 continue
 
