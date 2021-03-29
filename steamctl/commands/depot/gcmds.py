@@ -305,6 +305,8 @@ def cmd_depot_list(args):
                 fileindex.index('*.vpk')
 
             for manifest in manifests:
+                LOG.debug("Processing: %r", manifest)
+
                 if manifest.filenames_encrypted:
                     LOG.error("Manifest %s (depot %s) filenames are encrypted.", manifest.gid, manifest.depot_id)
                     continue
