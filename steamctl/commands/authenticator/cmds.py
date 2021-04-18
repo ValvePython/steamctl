@@ -184,7 +184,7 @@ def cmd_authenticator_add(args):
     secrets_file.write_json(sa.secrets)
 
     # Setup Steam app in conjuction
-    if pmt_confirmation("Do you want to use Steam app too?", default_yes=False):
+    if pmt_confirmation("Do you want to use Steam Mobile app too? (Needed for trades)", default_yes=False):
         print("Great! Go and setup Steam Guard in your app.")
         print("Once completed, generate a code and enter it below.")
 
