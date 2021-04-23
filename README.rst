@@ -27,6 +27,7 @@ Command list
 .. code:: text
 
     apps                Get information about apps
+    |- activate_key       Activate key(s) on account
     |- list               List owned or all apps
     |- product_info       Show product info for app
     \- item_def           Get item definitions for app

@@ -12,7 +12,7 @@ import functools
 from binascii import hexlify
 from contextlib import contextmanager
 from steam.exceptions import SteamError
-from steam.enums import EResult
+from steam.enums import EResult, EPurchaseResultDetail
 from steam.client import EMsg
 from steam import webapi
 from steam.utils import chunks
@@ -29,6 +29,23 @@ def init_client(args):
     s.login_from_args(args)
     yield s
     s.disconnect()
+
+def cmd_apps_activate_key(args):
+    with init_client(args) as s:
+        for key in args.keys:
+            print("-- Activating: {}".format(key))
+            result, detail, receipt = s.register_product_key(key)
+
+            detail = EPurchaseResultDetail(detail)
+
+            print(f"Result: {result.name} ({result:d}) Detail: {detail.name} ({detail:d})")
+
+            products = [product.get('ItemDescription', '<NoName>') for product in receipt.get('lineitems', {}).values()]
+
+            if result == EResult.OK:
+                print("Products:", ', '.join(products) if products else "None")
+            else:
+                return 1  # error
 
 def cmd_apps_product_info(args):
     with init_client(args) as s:

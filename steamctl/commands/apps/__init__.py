@@ -26,6 +26,11 @@ def cmd_parser(cp):
                                description='',
                                )
 
+    # ---- activate_key
+    scp_l = sub_cp.add_parser("activate_key", help="Activate key(s) on account")
+    scp_l.add_argument('keys', metavar='GameKey', nargs='+', type=str, help='Key(s) to activate')
+    scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_activate_key')
+
     # ---- list
     scp_l = sub_cp.add_parser("list", help="List owned or all apps")
     scp_l.add_argument('--all', action='store_true', help='List all apps on Steam')
