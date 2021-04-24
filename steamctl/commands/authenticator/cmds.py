@@ -210,7 +210,7 @@ def cmd_authenticator_add(args):
 
                 if not pmt_confirmation("Code mismatch. Try again?", default_yes=True):
                     _LOG.debug("Removing secrets file")
-                    secrets_file.remove()
+                    secrets_file.secure_remove()
                     return 1 # failed, exit
 
     # only setup steamctl 2fa
@@ -243,7 +243,7 @@ def cmd_authenticator_remove(args):
         return 1  #error
 
     if args.force:
-        secrets_file.remove()
+        secrets_file.secure_remove()
         print("Forceful removal of %r successful" % account)
         return
 
@@ -274,7 +274,7 @@ def cmd_authenticator_remove(args):
             except (EOFError, KeyboardInterrupt):
                 break
             else:
-                secrets_file.remove()
+                secrets_file.secure_remove()
                 print("Removal successful!")
                 return
 
