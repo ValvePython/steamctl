@@ -9,15 +9,22 @@ import json
 import codecs
 import logging
 import functools
+from time import time
 from binascii import hexlify
 from contextlib import contextmanager
 from steam.exceptions import SteamError
 from steam.enums import EResult, EPurchaseResultDetail
 from steam.client import EMsg
-from steam import webapi
 from steam.utils import chunks
 from steamctl.clients import CachingSteamClient
 from steamctl.utils.web import make_requests_session
+from steamctl.utils.format import fmt_datetime
+from steam.enums import ELicenseType, ELicenseFlags, EBillingType
+from steam.core.msg import MsgProto
+from steamctl.commands.apps.enums import EPaymentMethod
+from steamctl.utils.storage import SqliteDict, UserCacheFile
+from steamctl.utils.web import make_requests_session
+from steam import webapi
 
 webapi._make_requests_session = make_requests_session
 
@@ -29,6 +36,29 @@ def init_client(args):
     s.login_from_args(args)
     yield s
     s.disconnect()
+
+def get_app_names():
+    papps = SqliteDict(UserCacheFile("app_names.sqlite3").path)
+
+    try:
+        last = int(papps[-7])  # use a key that will never be used
+    except KeyError:
+        last = 0
+
+    if last < time():
+        resp = webapi.get('ISteamApps', 'GetAppList', version=2)
+        apps = resp.get('applist', {}).get('apps', [])
+
+        if not apps and len(papps) == 0:
+            raise RuntimeError("Failed to fetch apps")
+
+        for app in apps:
+            papps[int(app['appid'])] = app['name']
+
+        papps[-7] = str(int(time()) + 86400)
+        papps.commit()
+
+    return papps
 
 def cmd_apps_activate_key(args):
     with init_client(args) as s:
@@ -75,19 +105,12 @@ def cmd_apps_product_info(args):
             json.dump(v, sys.stdout, indent=4, sort_keys=True)
 
 def cmd_apps_list(args):
-    resp = webapi.get('ISteamApps', 'GetAppList', version=2)
-
-    apps = resp.get('applist', {}).get('apps', [])
-
-    if not apps:
-        LOG.error("Failed to get app list")
-        return 1  # error
+    app_names = get_app_names()
 
     if args.all:
-        width = len(str(max(map(lambda app: app['appid'], apps))))
-
-        for app in sorted(apps, key=lambda app: app['appid']):
-            print(str(app['appid']).ljust(width), app['name'])
+        for app_id, name in app_names.items():
+            if app_id >= 0:
+                print(app_id, name)
 
     else:
         with init_client(args) as s:
@@ -97,13 +120,8 @@ def cmd_apps_list(args):
             cdn = s.get_cdnclient()
             cdn.load_licenses()
 
-            owned_apps = list(cdn.licensed_app_ids)
-
-        apps = dict(map(lambda x: (x['appid'], x['name']), apps))
-        width = len(str(max(owned_apps)))
-
-        for app_id in sorted(owned_apps):
-            print(str(app_id).ljust(width), apps.get(app_id, 'Unknown App {}'.format(app_id)))
+        for app_id in sorted(cdn.licensed_app_ids):
+            print(app_id, app_names.get(app_id, 'Unknown App {}'.format(app_id)))
 
 
 def cmd_apps_item_def(args):
@@ -155,3 +173,117 @@ def cmd_apps_item_def(args):
                 chunk = chunk[:-1]
 
             sys.stdout.write(chunk)
+
+# ---- licenses section
+
+def cmd_apps_licenses_list(args):
+    with init_client(args) as s:
+        app_names = get_app_names()
+
+        # ensure that the license list has loaded
+        if not s.licenses:
+            s.wait_event(EMsg.ClientLicenseList)
+
+        for chunk in chunks(list(s.licenses), 100):
+            packages = s.get_product_info(packages=chunk)['packages']
+
+            for pkg_id in chunk:
+                license = s.licenses[pkg_id]
+                info = packages[pkg_id]
+
+                # skip licenses not granting specified app ids
+                if args.app and set(info['appids'].values()).isdisjoint(args.app):
+                    continue
+
+                # skip licenses not matching specified billingtype(s)
+                if args.billingtype and EBillingType(info['billingtype']).name not in args.billingtype:
+                    continue
+
+                print(f"License: { pkg_id }")
+                print(f"  Type:             { ELicenseType(license.license_type).name }")
+                print(f"  Created:          { fmt_datetime(license.time_created) }")
+                print(f"  Purchase country: { license.purchase_country_code }")
+                print(f"  Payment method:   { EPaymentMethod(license.payment_method).name }")
+
+                flags = ', '.join((flag.name for flag in ELicenseFlags if flag & license.flags))
+
+                print(f"  Flags:            { flags }")
+                print(f"  Change number:    { license.change_number }")
+                print(f"  SteamDB:          https://steamdb.info/sub/{ pkg_id }/")
+                print(f"  Billing Type:     { EBillingType(info['billingtype']).name }")
+                print(f"  Status:           { info['status'] }")
+
+                if info.get('extended', None):
+                    print("  Extended:")
+                    for key, val in info['extended'].items():
+                        print(f"    {key}: {val}")
+
+                if info.get('appids', None):
+                    print("  Apps:")
+                    for app_id in info['appids'].values():
+                        app_name = app_names.get(app_id, f'Unknown App {app_id}')
+                        print(f"    {app_id}: {app_name}")
+
+def cmd_apps_licenses_add(args):
+    with init_client(args) as s:
+        web = s.get_web_session()
+        app_names = get_app_names()
+
+        for pkg_id in args.pkg_ids:
+            if pkg_id in s.licenses:
+                print(f'Already owned package: {pkg_id}')
+                continue
+
+            resp = web.post(f'https://store.steampowered.com/checkout/addfreelicense/{pkg_id}',
+                            data={'ajax': 'true', 'sessionid': web.cookies.get('sessionid', domain='store.steampowered.com')},
+                            )
+
+            if resp.status_code != 200:
+                LOG.error(f'Request failed with HTTP code {resp.status_code}')
+                return 1  # error
+
+            if resp.json() is None:
+                print(f"Failed package: {pkg_id}")
+                continue
+
+            if pkg_id not in s.licenses:
+                s.wait_event(EMsg.ClientLicenseList, timeout=2)
+
+            if pkg_id in s.licenses:
+                print(f'Activated package: {pkg_id}')
+
+                for app_id in s.get_product_info(packages=[pkg_id])['packages'][pkg_id]['appids'].values():
+                    app_name = app_names.get(app_id, f'Unknown App {app_id}')
+                    print(f"  + {app_id}: {app_name}")
+            else:
+                # this shouldn't happen
+                print(f'Activated package: {pkg_id} (BUT, NO LICENSE ON ACCOUNT?)')
+
+def cmd_apps_licenses_remove(args):
+    with init_client(args) as s:
+        web = s.get_web_session()
+        app_names = get_app_names()
+
+        for pkg_id in args.pkg_ids:
+            if pkg_id not in s.licenses:
+                print(f'No license for: {pkg_id}')
+                continue
+
+            info = s.get_product_info(packages=[pkg_id])['packages'][pkg_id]
+
+            resp = web.post(f'https://store.steampowered.com/account/removelicense',
+                            data={'packageid': pkg_id, 'sessionid': web.cookies.get('sessionid', domain='store.steampowered.com')},
+                            )
+
+            if resp.status_code != 200:
+                LOG.error(f'Request failed with HTTP code {resp.status_code}')
+                return 1  # error
+
+            if resp.json()['success']:
+                print(f"Removed package: {pkg_id}")
+
+                for app_id in info['appids'].values():
+                    app_name = app_names.get(app_id, f'Unknown App {app_id}')
+                    print(f"  - {app_id}: {app_name}")
+            else:
+                print(f"Failed to remove: {pkg_id}")

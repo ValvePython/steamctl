@@ -173,7 +173,6 @@ class CachingSteamClient(SteamClient):
         return resp
 
 
-
 class CTLDepotFile(CDNDepotFile):
     _LOG = logging.getLogger('CTLDepotFile')
 

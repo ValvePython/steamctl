@@ -28,6 +28,10 @@ Command list
 
     apps                Get information about apps
     |- activate_key       Activate key(s) on account
+    |- licenses           Manage licenses
+    |  |- list              List all licenses on account
+    |  |- add               Add free package license(s)
+    |  \- remove            Remove free package license(s)
     |- list               List owned or all apps
     |- product_info       Show product info for app
     \- item_def           Get item definitions for app

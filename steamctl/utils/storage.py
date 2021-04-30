@@ -8,6 +8,8 @@ from io import open
 from contextlib import contextmanager
 import fnmatch
 import shutil
+from collections import UserDict
+import sqlite3
 from appdirs import AppDirs
 from steamctl import __appname__
 
@@ -158,3 +160,55 @@ class UserDataDirectory(DirectoryBase):
 class UserCacheDirectory(DirectoryBase):
     _root_path = _appdirs.user_cache_dir
     _file_type = UserCacheFile
+
+
+class SqliteDict(UserDict):
+    def __init__(self, path=':memory:'):
+        self._db = sqlite3.connect(path)
+        self._db.execute('CREATE TABLE IF NOT EXISTS kv (key INTEGER PRIMARY KEY, value TEXT)')
+        self._db.commit()
+
+    def __len__(self):
+         return self._db.execute('SELECT count(*) FROM kv').fetchone()[0]
+
+    def __contain__(self, key):
+        return self.get(key) is not None
+
+    def get(self, key, default=None):
+        row = self._db.execute('SELECT value FROM kv WHERE key = ?', (key,)).fetchone()
+        return row[0] if row else default
+
+    def __getitem__(self, key):
+        val = self.get(key)
+
+        if val is None:
+            raise KeyError(key)
+        else:
+            if val and val[0] == '{' and val[-1] == '}':
+                val = json.loads(val)
+            return val
+
+    def __setitem__(self, key, val):
+        if isinstance(val, str):
+            pass
+        elif isinstance(val, dict):
+            val = json.dumps(val)
+        else:
+            raise TypeError("Only str or dict types are allowed")
+
+        self._db.execute("REPLACE INTO kv VALUES (?, ?)", (key, val))
+
+    def items(self):
+        for item in self._db.execute("SELECT key, value FROM kv ORDER BY key ASC"):
+            yield item
+
+    def commit(self):
+        self._db.commit()
+
+    def __del__(self):
+        self.commit()
+
+        try:
+            self._db.close(do_log=False, force=True)
+        except Exception:
+            pass
