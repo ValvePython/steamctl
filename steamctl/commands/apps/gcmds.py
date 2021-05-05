@@ -21,7 +21,7 @@ from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import fmt_datetime
 from steam.enums import ELicenseType, ELicenseFlags, EBillingType
 from steam.core.msg import MsgProto
-from steamctl.commands.apps.enums import EPaymentMethod
+from steamctl.commands.apps.enums import EPaymentMethod, EPackageStatus
 from steamctl.utils.storage import SqliteDict, UserCacheFile
 from steamctl.utils.web import make_requests_session
 from steam import webapi
@@ -200,18 +200,18 @@ def cmd_apps_licenses_list(args):
                     continue
 
                 print(f"License: { pkg_id }")
-                print(f"  Type:             { ELicenseType(license.license_type).name }")
+                print(f"  Type:             { ELicenseType(license.license_type).name } ({license.license_type})")
                 print(f"  Created:          { fmt_datetime(license.time_created) }")
                 print(f"  Purchase country: { license.purchase_country_code }")
-                print(f"  Payment method:   { EPaymentMethod(license.payment_method).name }")
+                print(f"  Payment method:   { EPaymentMethod(license.payment_method).name } ({license.payment_method})")
 
                 flags = ', '.join((flag.name for flag in ELicenseFlags if flag & license.flags))
 
                 print(f"  Flags:            { flags }")
                 print(f"  Change number:    { license.change_number }")
                 print(f"  SteamDB:          https://steamdb.info/sub/{ pkg_id }/")
-                print(f"  Billing Type:     { EBillingType(info['billingtype']).name }")
-                print(f"  Status:           { info['status'] }")
+                print(f"  Billing Type:     { EBillingType(info['billingtype']).name } ({info['billingtype']})")
+                print(f"  Status:           { EPackageStatus(info['status']).name } ({info['status']})")
 
                 if info.get('extended', None):
                     print("  Extended:")

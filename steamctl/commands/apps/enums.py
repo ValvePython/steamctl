@@ -94,3 +94,10 @@ class EPaymentMethod(SteamIntEnum):
     OEMTicket = 256
     Split = 512
     Complimentary = 1024
+
+class EPackageStatus(SteamIntEnum):
+    Available = 0
+    Preorder = 1
+    Unavailable = 2
+    Invalid = 3
+
