@@ -210,8 +210,10 @@ def cmd_apps_licenses_list(args):
                 print(f"  Flags:            { flags }")
                 print(f"  Change number:    { license.change_number }")
                 print(f"  SteamDB:          https://steamdb.info/sub/{ pkg_id }/")
-                print(f"  Billing Type:     { EBillingType(info['billingtype']).name } ({info['billingtype']})")
-                print(f"  Status:           { EPackageStatus(info['status']).name } ({info['status']})")
+                if 'billingtype' in info:
+                    print(f"  Billing Type:     { EBillingType(info['billingtype']).name } ({info['billingtype']})")
+                if 'status' in info:
+                    print(f"  Status:           { EPackageStatus(info['status']).name } ({info['status']})")
 
                 if info.get('extended', None):
                     print("  Extended:")
