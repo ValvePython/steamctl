@@ -4,7 +4,7 @@
 steamctl
 --------
 
-``steamctl`` is an opensource CLI utility smiliar to ``steamcmd``. It provies access to a number of Steam features and data from the command line. While it is possible to download apps and conntent from Steam, `steamctl` is not a game launcher. 
+``steamctl`` is an open-source CLI utility similar to ``steamcmd``. It provides access to a number of Steam features and data from the command line. While it is possible to download apps and content from Steam, `steamctl` is not a game launcher. 
 
 Install
 -------
@@ -92,7 +92,7 @@ Command list
 Previews
 --------
 
-``steamctl authenticator`` (No root required, and transferable token. Steamapp, steamctl, and aegis, with the same token)
+``steamctl authenticator`` (No root required, and transferable token. Steamapp, ``steamctl``, and aegis, with the same token)
 
 .. image:: https://raw.githubusercontent.com/ValvePython/steamctl/master/preview_authenticator.jpg
     :alt: preview: steamctl authenticator
