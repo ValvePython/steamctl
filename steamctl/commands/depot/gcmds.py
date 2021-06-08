@@ -14,11 +14,13 @@ from io import open
 from contextlib import contextmanager
 from re import search as re_search
 from fnmatch import fnmatch
+from binascii import unhexlify
 import vpk
 from steam import webapi
 from steam.exceptions import SteamError
 from steam.enums import EResult, EDepotFileFlag
-from steam.client import EMsg
+from steam.client import EMsg, MsgProto
+from steam.client.cdn import decrypt_manifest_gid_2
 from steamctl.clients import CachingSteamClient, CTLDepotManifest, CTLDepotFile
 from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import fmt_size, fmt_datetime
@@ -147,8 +149,11 @@ def init_clients(args):
     else:
         LOG.info("Skipping login")
 
+    if getattr(args, 'no_manifests', None):
+        manifests = []
+
     # when app, depot, and manifest are specified, we can just go to CDN
-    if args.app and args.depot and args.manifest:
+    elif args.app and args.depot and args.manifest:
         # we can only decrypt if SteamClient is logged in, or we have depot key cached
         if args.skip_login and args.depot not in cdn.depot_keys:
             decrypt = False
@@ -623,3 +628,26 @@ def cmd_depot_diff(args):
     except SteamError as exp:
         LOG.error(exp)
         return 1  # error
+
+
+def cmd_depot_decrypt_gid(args):
+    args.cell_id = 0
+    args.no_manifests = True
+    args.skip_login = False
+    args.depot = None
+
+    with init_clients(args) as (s, _, _):
+        resp = s.send_job_and_wait(MsgProto(EMsg.ClientCheckAppBetaPassword),
+                                   {'app_id': args.app, 'betapassword': args.password})
+
+        if resp.eresult == EResult.OK:
+            LOG.debug("Unlocked following beta branches: %s",
+                      ', '.join(map(lambda x: x.betaname.lower(), resp.betapasswords)))
+
+            for entry in resp.betapasswords:
+                print("Password is valid for branch:", entry.betaname)
+                for egid in args.manifest_gid:
+                    gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(entry.betapassword))
+                    print(' ', egid, '=', gid)
+        else:
+            raise SteamError("App beta password check failed.", EResult(resp.eresult))

@@ -125,3 +125,10 @@ def cmd_parser(cp):
     scp_df.add_argument('--hide-mismatch', action='store_true', help='Do not show manifest files mismatch (size, chucksum) with filesystem ones ')
     scp_df.add_argument('--show-extra', action='store_true', help='Show files that exist on the filesystem, but not in the manifest(s)')
     scp_df.add_argument('TARGETDIR', nargs='?', default='.', type=str, help='Directory to compare to (default: current)')
+
+    # ---- decrypt_gid
+    scp_l = sub_cp.add_parser("decrypt_gid", help="Decrypt manifest gid")
+    scp_l.add_argument('-a', '--app', type=int, help='App ID')
+    scp_l.add_argument('-p', '--password', type=str, help='Branch password')
+    scp_l.add_argument('manifest_gid', type=str, nargs='+', help='Encrypted manifest gid')
+    scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_depot_decrypt_gid')
