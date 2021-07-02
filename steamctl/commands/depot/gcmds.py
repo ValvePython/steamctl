@@ -602,7 +602,7 @@ def cmd_depot_diff(args):
 
                         # valve sets the checksum for empty files to all nulls
                         if size == 0:
-                            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                            chucksum = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                         else:
                             chucksum = calc_sha1_for_file(full_filepath)
 
