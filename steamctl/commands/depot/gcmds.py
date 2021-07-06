@@ -636,6 +636,19 @@ def cmd_depot_decrypt_gid(args):
     args.skip_login = False
     args.depot = None
 
+    valid_gids = []
+
+    for egid in args.manifest_gid:
+        if not re.match(r'[0-9A-Za-z]{32}$', egid):
+            LOG.error("Skipping invalid gid: %s", egid)
+        else:
+            valid_gids.append(egid)
+
+    if not valid_gids:
+        LOG.error("No valid gids left to check")
+        return 1  # error
+
+
     with init_clients(args) as (s, _, _):
         resp = s.send_job_and_wait(MsgProto(EMsg.ClientCheckAppBetaPassword),
                                    {'app_id': args.app, 'betapassword': args.password})
@@ -646,7 +659,7 @@ def cmd_depot_decrypt_gid(args):
 
             for entry in resp.betapasswords:
                 print("Password is valid for branch:", entry.betaname)
-                for egid in args.manifest_gid:
+                for egid in valid_gids:
                     gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(entry.betapassword))
                     print(' ', egid, '=', gid)
         else:
