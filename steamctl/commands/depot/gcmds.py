@@ -125,8 +125,11 @@ def init_clients(args):
     # short-curcuit everything, if we pass manifest file(s)
     if getattr(args, 'file', None):
         manifests = []
-        for fp in args.file:
-            manifests.append(CTLDepotManifest(cdn, args.app or -1, fp.read()))
+        for file_list in args.file:
+            for fp in file_list:
+                manifest = CTLDepotManifest(cdn, args.app or -1, fp.read())
+                manifest.name = os.path.basename(fp.name)
+                manifests.append(manifest)
         yield None, None, manifests
         return
 
