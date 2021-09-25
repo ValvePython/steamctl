@@ -6,7 +6,7 @@ import os
 import logging
 from time import time
 from steam.enums import EResult, EPersonaState
-from steam.client import SteamClient
+from steam.client import SteamClient, _cli_input, getpass
 from steam.client.cdn import CDNClient, CDNDepotManifest, CDNDepotFile, ContentServer
 from steam.exceptions import SteamError
 from steam.core.crypto import sha1_hash
@@ -88,12 +88,30 @@ class CachingSteamClient(SteamClient):
 
         # attempt manual cli login
         if not self.logged_on:
-            if self.username:
-                self._LOG.info("Enter credentials for: %s", self.username)
-            else:
-                self._LOG.info("Enter Steam login")
+            result = EResult.InvalidPassword
 
-            result = self.cli_login(self.username)
+            if not self.username:
+                self._LOG.info("Enter Steam login")
+                self.username = _cli_input("Username: ")
+            else:
+                self._LOG.info("Enter credentials for: %s", self.username)
+
+            password = getpass()
+
+            # check for existing authenticator
+            secrets_file = UserDataFile('authenticator/{}.json'.format(self.username))
+
+            if secrets_file.exists():
+                from steam.guard import SteamAuthenticator
+                sa = SteamAuthenticator(secrets_file.read_json())
+
+                while result == EResult.InvalidPassword:
+                    result = self.login(self.username, password, two_factor_code=sa.get_code())
+                    password = getpass("Invalid password for %s. Enter password: " % repr(self.username))
+                    self.sleep(0.1)
+
+            if result != EResult.OK:
+                result = self.cli_login(self.username, password)
 
         if not lastFile.exists() or lastFile.read_text() != self.username:
             lastFile.write_text(self.username)
