@@ -107,8 +107,10 @@ class CachingSteamClient(SteamClient):
 
                 while result == EResult.InvalidPassword:
                     result = self.login(self.username, password, two_factor_code=sa.get_code())
-                    password = getpass("Invalid password for %s. Enter password: " % repr(self.username))
-                    self.sleep(0.1)
+
+                    if result == EResult.InvalidPassword:
+                        password = getpass("Invalid password for %s. Enter password: " % repr(self.username))
+                        self.sleep(0.1)
 
             if result != EResult.OK:
                 result = self.cli_login(self.username, password)
