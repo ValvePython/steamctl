@@ -130,5 +130,6 @@ def cmd_parser(cp):
     scp_l = sub_cp.add_parser("decrypt_gid", help="Decrypt manifest gid")
     scp_l.add_argument('-a', '--app', type=int, help='App ID')
     scp_l.add_argument('-p', '--password', type=str, help='Branch password')
-    scp_l.add_argument('manifest_gid', type=str, nargs='+', help='Encrypted manifest gid')
+    scp_l.add_argument('-k', '--key', type=str, help='Decryption key for gid (hex encoded)')
+    scp_l.add_argument('manifest_gid', type=str, nargs='+', help='Encrypted manifest gid (hex encoded)')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_depot_decrypt_gid')

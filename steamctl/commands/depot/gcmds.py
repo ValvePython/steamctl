@@ -633,6 +633,17 @@ def cmd_depot_diff(args):
         return 1  # error
 
 
+def _decrypt_gid(egid, key):
+    try:
+        gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(key))
+    except Exception as exp:
+        if 'unpack requires a buffer' in str(exp):
+            print(' ', egid, '- incorrect decryption key')
+        else:
+            print(' ', egid, '- Error: ', str(exp))
+    else:
+        print(' ', egid, '=', gid)
+
 def cmd_depot_decrypt_gid(args):
     args.cell_id = 0
     args.no_manifests = True
@@ -651,7 +662,18 @@ def cmd_depot_decrypt_gid(args):
         LOG.error("No valid gids left to check")
         return 1  # error
 
+    # offline: decrypt gid via decryption key
+    if args.key:
+        if not re.match(r'[0-9A-Za-z]{64}$', args.key):
+            LOG.error("Invalid decryption key (format: hex encoded, a-z0-9, 64 bytes)")
+            return 1 # error
 
+        for egid in valid_gids:
+            _decrypt_gid(egid, args.key)
+
+        return
+
+    # online: use branch password to fetch decryption key and attempt to decrypt gid
     with init_clients(args) as (s, _, _):
         resp = s.send_job_and_wait(MsgProto(EMsg.ClientCheckAppBetaPassword),
                                    {'app_id': args.app, 'betapassword': args.password})
@@ -663,14 +685,6 @@ def cmd_depot_decrypt_gid(args):
             for entry in resp.betapasswords:
                 print("Password is valid for branch:", entry.betaname)
                 for egid in valid_gids:
-                    try:
-                        gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(entry.betapassword))
-                    except Exception as exp:
-                        if 'unpack requires a buffer' in str(exp):
-                            print(' ', egid, '- incorrect decryption key')
-                        else:
-                            print(' ', egid, '- Error: ', str(exp))
-                    else:
-                        print(' ', egid, '=', gid)
+                    _decrypt_gid(egid, entry.betapassword)
         else:
             raise SteamError("App beta password check failed.", EResult(resp.eresult))
