@@ -2,6 +2,7 @@
 from steamctl import __appname__, __version__
 from types import FunctionType
 from collections import OrderedDict
+import sys
 import argparse
 import argcomplete
 
@@ -19,6 +20,15 @@ Tab Completion
 
     The above code can be added to .bashrc to persist between sessions for the user.
     """
+
+class ActionVersionsReport(argparse.Action):
+    def __init__(self, *args, **kwargs):
+       super().__init__(nargs=0, help='show detailed versions report and exit', **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        from steamctl.utils.versions_report import versions_report
+        versions_report()
+        sys.exit(0)
 
 _subcommands = OrderedDict()
 
@@ -50,6 +60,7 @@ def generate_parser(pre=False):
     parser.prog = __appname__
 
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
+    parser.add_argument('--versions-report', action=ActionVersionsReport)
     parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
 
     # return pre parser
