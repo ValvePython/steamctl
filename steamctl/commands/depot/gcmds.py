@@ -663,7 +663,14 @@ def cmd_depot_decrypt_gid(args):
             for entry in resp.betapasswords:
                 print("Password is valid for branch:", entry.betaname)
                 for egid in valid_gids:
-                    gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(entry.betapassword))
-                    print(' ', egid, '=', gid)
+                    try:
+                        gid = decrypt_manifest_gid_2(unhexlify(egid), unhexlify(entry.betapassword))
+                    except Exception as exp:
+                        if 'unpack requires a buffer' in str(exp):
+                            print(' ', egid, '- incorrect decryption key')
+                        else:
+                            print(' ', egid, '- Error: ', str(exp))
+                    else:
+                        print(' ', egid, '=', gid)
         else:
             raise SteamError("App beta password check failed.", EResult(resp.eresult))
