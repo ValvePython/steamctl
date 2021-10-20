@@ -16,8 +16,16 @@ A clear and concise description of what the bug is.
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**What actually happend**
+Description of what actually happend
+
+**Logs**
+<details><summary>steamctl -l debug</summary>
+(Include logs related ot the issue. Use `steamctl -l debug` to get detailed log)
+```
+PASTE LOG HERE
+```
+</details>
 
 **Versions Report**
 <details><summary>steamctl --versions-report</summary>
