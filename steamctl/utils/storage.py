@@ -51,6 +51,9 @@ class FileBase(object):
     def exists(self):
         return os.path.exists(self.path)
 
+    def mkdir(self):
+        ensure_dir(self.path, 0o700)
+
     def older_than(seconds=0, minutes=0, hours=0, days=0):
         delta = seconds + (minutes*60) + (hours*3600) + (days*86400)
         ts = os.path.getmtime(self.path)
@@ -58,7 +61,7 @@ class FileBase(object):
 
     def open(self, mode):
         _LOG.debug("Opening file (%s): %s", mode, self.path)
-        ensure_dir(self.path, 0o700)
+        self.mkdir()
         return open(self.path, mode)
 
     def read_text(self):
@@ -164,6 +167,10 @@ class UserCacheDirectory(DirectoryBase):
 
 class SqliteDict(UserDict):
     def __init__(self, path=':memory:'):
+        if isinstance(path, FileBase):
+            path.mkdir()
+            path = path.path
+
         self._db = sqlite3.connect(path)
         self._db.execute('CREATE TABLE IF NOT EXISTS kv (key INTEGER PRIMARY KEY, value TEXT)')
         self._db.commit()

@@ -38,7 +38,7 @@ def init_client(args):
     s.disconnect()
 
 def get_app_names():
-    papps = SqliteDict(UserCacheFile("app_names.sqlite3").path)
+    papps = SqliteDict(UserCacheFile("app_names.sqlite3"))
 
     try:
         last = int(papps[-7])  # use a key that will never be used
