@@ -56,6 +56,7 @@ Command list
 
     cloud               Manage Steam Cloud files (e.g. save files, settings, etc)
     |- list               List files for app
+    |- list_apps          List all apps with cloud files
     \- download           Download files for app
 
     depot               List and download from Steam depots

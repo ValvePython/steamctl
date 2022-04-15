@@ -18,6 +18,7 @@ from steamctl.utils.web import make_requests_session
 from steamctl.utils.tqdm import tqdm, fake_tqdm
 from steamctl.utils.format import fmt_size
 from steamctl.utils.storage import ensure_dir, sanitizerelpath
+from steamctl.utils.apps import get_app_names
 
 LOG = logging.getLogger(__name__)
 
@@ -71,13 +72,32 @@ def cmd_cloud_list(args):
                         )
                       )
 
+def cmd_cloud_list_apps(args):
+    with init_client(args) as s:
+        msg = s.send_um_and_wait('Cloud.EnumerateUserApps#1', timeout=10)
+        print(msg)
+
+        if msg is None or  msg.body is None:
+            return 1 # error
+
+        app_names = get_app_names()
+
+        for app in msg.body.apps:
+            print("{} - {} - Files: {} Size: {}".format(
+                    app.appid,
+                    app_names.get(app.appid, f'Unknown App {app.appid}'),
+                    app.totalcount,
+                    fmt_size(app.totalsize),
+                    )
+                 )
+
 def download_file(args, sess, file, pbar_size, pbar_files):
     fstream = sess.get(file.url, stream=True)
     filename = file.filename
 
     if fstream.status_code != 200:
         LOG.error("Failed to download: {}".format(filename))
-        return
+        return 1 # error
 
     relpath = sanitizerelpath(filename)
     # ensure there is a / after %vars%, and replace % with _

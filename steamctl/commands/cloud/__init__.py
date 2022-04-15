@@ -41,6 +41,9 @@ def cmd_parser(cp):
     scp_l.add_argument('app_id', metavar='AppID', type=int, help='AppID to query')
     scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_cloud_list')
 
+    scp_la = sub_cp.add_parser("list_apps", help="List all apps with cloud files")
+    scp_la.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_cloud_list_apps')
+
     scp_dl = sub_cp.add_parser("download", help="Download files for app")
     scp_dl.add_argument('-o', '--output', type=str, default='', help='Path to directory for the downloaded files (default: cwd)')
     scp_dl.add_argument('-np', '--no-progress', action='store_true', help='Do not create directories')

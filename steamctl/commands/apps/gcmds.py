@@ -22,11 +22,7 @@ from steamctl.utils.format import fmt_datetime
 from steam.enums import ELicenseType, ELicenseFlags, EBillingType
 from steam.core.msg import MsgProto
 from steamctl.commands.apps.enums import EPaymentMethod, EPackageStatus
-from steamctl.utils.storage import SqliteDict, UserCacheFile
-from steamctl.utils.web import make_requests_session
-from steam import webapi
-
-webapi._make_requests_session = make_requests_session
+from steamctl.utils.apps import get_app_names
 
 LOG = logging.getLogger(__name__)
 
@@ -36,29 +32,6 @@ def init_client(args):
     s.login_from_args(args)
     yield s
     s.disconnect()
-
-def get_app_names():
-    papps = SqliteDict(UserCacheFile("app_names.sqlite3"))
-
-    try:
-        last = int(papps[-7])  # use a key that will never be used
-    except KeyError:
-        last = 0
-
-    if last < time():
-        resp = webapi.get('ISteamApps', 'GetAppList', version=2)
-        apps = resp.get('applist', {}).get('apps', [])
-
-        if not apps and len(papps) == 0:
-            raise RuntimeError("Failed to fetch apps")
-
-        for app in apps:
-            papps[int(app['appid'])] = app['name']
-
-        papps[-7] = str(int(time()) + 86400)
-        papps.commit()
-
-    return papps
 
 def cmd_apps_activate_key(args):
     with init_client(args) as s:
