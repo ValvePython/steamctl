@@ -75,7 +75,6 @@ def cmd_cloud_list(args):
 def cmd_cloud_list_apps(args):
     with init_client(args) as s:
         msg = s.send_um_and_wait('Cloud.EnumerateUserApps#1', timeout=10)
-        print(msg)
 
         if msg is None or  msg.body is None:
             return 1 # error
