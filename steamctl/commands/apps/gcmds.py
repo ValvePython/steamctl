@@ -19,7 +19,7 @@ from steam.utils import chunks
 from steamctl.clients import CachingSteamClient
 from steamctl.utils.web import make_requests_session
 from steamctl.utils.format import fmt_datetime
-from steam.enums import ELicenseType, ELicenseFlags, EBillingType
+from steam.enums import ELicenseType, ELicenseFlags, EBillingType, EType
 from steam.core.msg import MsgProto
 from steamctl.commands.apps.enums import EPaymentMethod, EPackageStatus
 from steamctl.utils.apps import get_app_names
@@ -152,6 +152,12 @@ def cmd_apps_item_def(args):
 def cmd_apps_licenses_list(args):
     with init_client(args) as s:
         app_names = get_app_names()
+
+        if s.steam_id.type == EType.AnonUser:
+            from steam.protobufs.steammessages_clientserver_pb2 import CMsgClientLicenseList
+            s.licenses = {
+                17906: CMsgClientLicenseList.License(package_id=17906, license_type=1)
+            }
 
         # ensure that the license list has loaded
         if not s.licenses:
