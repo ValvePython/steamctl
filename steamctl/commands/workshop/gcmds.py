@@ -11,7 +11,7 @@ import sys
 import logging
 from io import open
 from steam import webapi
-from steam.exceptions import SteamError
+from steam.exceptions import SteamError, ManifestError
 from steam.enums import EResult
 from steamctl.utils.storage import ensure_dir, sanitizerelpath
 from steamctl.utils.web import make_requests_session
@@ -74,9 +74,16 @@ def download_via_steampipe(args, pubfile):
 
 
     key = pubfile['consumer_appid'], pubfile['consumer_appid'], pubfile['hcontent_file']
+    manifest = cdn.get_cached_manifest(*key)
 
     # only login if we dont have depot decryption key
-    if int(pubfile['consumer_appid']) not in cdn.depot_keys:
+    if (
+        not manifest
+        or (
+            manifest.filenames_encrypted
+            and int(pubfile['consumer_appid']) not in cdn.depot_keys
+       )
+    ):
         result = s.login_from_args(args)
 
         if result == EResult.OK:
@@ -85,19 +92,18 @@ def download_via_steampipe(args, pubfile):
             LOG.error("Failed to login: %r" % result)
             return 1  # error
 
-    try:
-        manifest = cdn.get_manifest(*key)
-    except SteamError as exp:
-        if exp.eresult == EResult.AccessDenied:
-            LOG.error("This account doesn't have access to the app depot")
-        else:
-            LOG.error(str(exp))
-        return 1  # error
-    else:
-        manifest.name = pubfile['title']
+    if not manifest or manifest.filenames_encrypted:
+        try:
+            manifest_code = cdn.get_manifest_request_code(*key)
+            manifest = cdn.get_manifest(*key, manifest_request_code=manifest_code)
+        except ManifestError as exc:
+            LOG.error(str(exc))
+            return 1  # error
+
+    manifest.name = pubfile['title']
 
     LOG.debug("Got manifest: %r", manifest)
-    LOG.info("File manifest acquired")
+    LOG.info("File manifest acquired (%s)", pubfile['hcontent_file'])
 
     if not args.no_progress and sys.stderr.isatty():
         pbar = tqdm(total=manifest.size_original, mininterval=0.5, maxinterval=1, miniters=1024**3*10, unit='B', unit_scale=True)

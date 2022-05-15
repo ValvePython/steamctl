@@ -17,7 +17,7 @@ from fnmatch import fnmatch
 from binascii import unhexlify
 import vpk
 from steam import webapi
-from steam.exceptions import SteamError
+from steam.exceptions import SteamError, ManifestError
 from steam.enums import EResult, EDepotFileFlag
 from steam.client import EMsg, MsgProto
 from steam.client.cdn import decrypt_manifest_gid_2
@@ -199,6 +199,9 @@ def init_clients(args):
                 if args.depot != depot_id:
                     return False
 
+            if depot_id in args.skip_depot:
+                return False
+
             if args.os != 'any':
                 if args.os[-2:] == '64':
                     os, arch = args.os[:-2], args.os[-2:]
@@ -222,18 +225,13 @@ def init_clients(args):
 
         branch = args.branch
         password = args.password
+        cdn.skip_licenses = args.skip_licenses
 
         LOG.info("Getting manifests for %s branch", repr(branch))
 
         # enumerate manifests
         manifests = []
         for manifest in cdn.get_manifests(args.app, branch=branch, password=password, filter_func=depot_filter, decrypt=False):
-            if (not args.skip_licenses
-               and manifest.depot_id not in cdn.licensed_depot_ids
-               and manifest.depot_id not in cdn.licensed_app_ids):
-                LOG.error("No license for depot: %r" % manifest)
-                continue
-
             if manifest.filenames_encrypted:
                 if not args.skip_login:
                     try:

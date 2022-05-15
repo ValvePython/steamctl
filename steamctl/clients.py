@@ -263,6 +263,7 @@ class CachingCDNClient(CDNClient):
     DepotManifestClass = CTLDepotManifest
     _LOG = logging.getLogger('CachingCDNClient')
     _depot_keys = None
+    skip_licenses = False
 
     def __init__(self, *args, **kwargs):
         CDNClient.__init__(self, *args, **kwargs)
@@ -328,6 +329,13 @@ class CachingCDNClient(CDNClient):
             return True
         return False
 
+
+    def has_license_for_depot(self, depot_id):
+        if self.skip_licenses:
+            return True
+        else:
+            return CDNClient.has_license_for_depot(self, depot_id)
+
     def get_app_depot_info(self, app_id):
         if app_id not in self.app_depots:
             try:
@@ -377,7 +385,7 @@ class CachingCDNClient(CDNClient):
                 self._LOG.debug("Found cached manifest, but encountered error or file is empty")
                 cached_manifest.remove()
 
-    def get_manifest(self, app_id, depot_id, manifest_gid, decrypt=True):
+    def get_manifest(self, app_id, depot_id, manifest_gid, decrypt=True, manifest_request_code=None):
         key = (app_id, depot_id, manifest_gid)
         cached_manifest = UserCacheFile("manifests/{}_{}_{}".format(*key))
 
@@ -388,7 +396,9 @@ class CachingCDNClient(CDNClient):
 
         # if manifest not cached, download from CDN
         if not manifest:
-            manifest = CDNClient.get_manifest(self, app_id, depot_id, manifest_gid, decrypt)
+            manifest = CDNClient.get_manifest(
+                self, app_id, depot_id, manifest_gid, decrypt=decrypt, manifest_request_code=manifest_request_code
+            )
 
             # cache the manifest
             with cached_manifest.open('wb') as fp:
