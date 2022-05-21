@@ -195,11 +195,10 @@ def init_clients(args):
 
         # handle any filtering on depot list
         def depot_filter(depot_id, info):
-            if args.depot is not None:
-                if args.depot != depot_id:
+            if args.depot is not None and args.depot != depot_id:
                     return False
 
-            if depot_id in args.skip_depot:
+            if args.skip_depot and depot_id in args.skip_depot:
                 return False
 
             if args.os != 'any':
