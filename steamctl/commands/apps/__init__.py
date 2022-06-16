@@ -67,6 +67,11 @@ def cmd_parser(cp):
 
     # -------------- END SUBCOMMAND ----------------------
 
+    # ---- add
+    scp_l = sub_cp.add_parser("add", help="Add free app(s)")
+    scp_l.add_argument('app_ids', metavar='AppID', nargs='+', type=int, help='App ID to add')
+    scp_l.set_defaults(_cmd_func=__name__ + '.gcmds:cmd_apps_add')
+
     # ---- list
     scp_l = sub_cp.add_parser("list", help="List owned or all apps")
     scp_l.add_argument('--all', action='store_true', help='List all apps on Steam')

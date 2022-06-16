@@ -147,6 +147,25 @@ def cmd_apps_item_def(args):
 
             sys.stdout.write(chunk)
 
+def cmd_apps_add(args):
+    with init_client(args) as s:
+        resp = s.send_job_and_wait(
+            MsgProto(EMsg.ClientRequestFreeLicense),
+            { "appids": args.app_ids },
+            timeout=15
+        )
+
+        if not resp or resp.eresult != EResult.OK:
+            LOG.error("Failed to add app(s): %r", EResult.Timeout if resp is None else EResult(resp.eresult))
+            return 1 # error
+
+        if resp.granted_appids:
+            app_names = get_app_names()
+            print("Apps added:")
+            for app_id in resp.granted_appids:
+                app_name = app_names.get(app_id, f'Unknown App {app_id}')
+                print(f"+ {app_id}: {app_name}")
+
 # ---- licenses section
 
 def cmd_apps_licenses_list(args):
