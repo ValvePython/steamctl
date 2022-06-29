@@ -239,11 +239,13 @@ def cmd_apps_licenses_add(args):
                             )
 
             if resp.status_code != 200:
-                LOG.error(f'Request failed with HTTP code {resp.status_code}')
-                return 1  # error
+                print(f'Failed to activate: {pkg_id}')
 
-            if resp.json() is None:
-                print(f"Failed package: {pkg_id}")
+                try:
+                    error = EPurchaseResultDetail(resp.json()['purchaseresultdetail'])
+                    LOG.error(f'Result: {error!r}')
+                except:
+                    LOG.error(f'Request failed with HTTP {resp.status_code}')
                 continue
 
             if pkg_id not in s.licenses:
