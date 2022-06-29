@@ -171,9 +171,16 @@ class SqliteDict(UserDict):
             path.mkdir()
             path = path.path
 
+        self.path = path
         self._db = sqlite3.connect(path)
         self._db.execute('CREATE TABLE IF NOT EXISTS kv (key INTEGER PRIMARY KEY, value TEXT)')
         self._db.commit()
+
+    def __repr__(self):
+        return "%s(path=%r)" % (
+            self.__class__.__name__,
+            self.path,
+        )
 
     def __len__(self):
          return self._db.execute('SELECT count(*) FROM kv').fetchone()[0]
