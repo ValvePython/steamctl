@@ -140,8 +140,12 @@ def init_clients(args):
 
     # only login when we may need it
     if (not args.skip_login # user requested no login
-       and (not args.app or not args.depot or not args.manifest or
-            args.depot not in cdn.depot_keys)
+       and (not args.app
+            or not args.depot
+            or not args.manifest
+            or not cdn.get_cached_manifest(args.app, args.depot, args.manifest)
+            or args.depot not in cdn.depot_keys
+            )
        ):
         result = s.login_from_args(args)
 
@@ -157,6 +161,11 @@ def init_clients(args):
 
     # when app, depot, and manifest are specified, we can just go to CDN
     elif args.app and args.depot and args.manifest:
+        cached_manifest = cdn.get_cached_manifest(args.app, args.depot, args.manifest)
+
+        if args.skip_login and not cached_manifest:
+            raise SteamError("No cached manifest found. Steam login required to fetch manifest.")
+
         # we can only decrypt if SteamClient is logged in, or we have depot key cached
         if args.skip_login and args.depot not in cdn.depot_keys:
             decrypt = False
@@ -165,7 +174,19 @@ def init_clients(args):
 
         # load the manifest
         try:
-            manifests = [cdn.get_manifest(args.app, args.depot, args.manifest, decrypt=decrypt)]
+            if not cached_manifest:
+                manifest_code = cdn.get_manifest_request_code(
+                    args.app, args.depot, args.manifest
+                )
+            else:
+                manifest_code = None
+
+            manifests = [
+                cdn.get_manifest(
+                    args.app, args.depot, args.manifest,
+                    decrypt=decrypt, manifest_request_code=manifest_code
+                )
+            ]
         except SteamError as exp:
             if exp.eresult == EResult.AccessDenied:
                 raise SteamError("This account doesn't have access to the app depot", exp.eresult)
