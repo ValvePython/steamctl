@@ -73,6 +73,7 @@ def generate_parser(pre=False):
 
     parser.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')
     parser.add_argument('--user', type=str, help='Username for Steam login')
+    parser.add_argument('--password', type=str, help='Password for Steam login')
     parser.set_defaults(_cmd_func=print_help)
 
     if _subcommands:
