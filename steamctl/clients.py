@@ -96,7 +96,10 @@ class CachingSteamClient(SteamClient):
             else:
                 self._LOG.info("Enter credentials for: %s", self.username)
 
-            password = getpass()
+            if args.password:
+                password = args.password
+            else:
+                password = getpass()
 
             # check for existing authenticator
             secrets_file = UserDataFile('authenticator/{}.json'.format(self.username))
@@ -109,6 +112,8 @@ class CachingSteamClient(SteamClient):
                     result = self.login(self.username, password, two_factor_code=sa.get_code())
 
                     if result == EResult.InvalidPassword:
+                        if args.password:
+                            return result
                         password = getpass("Invalid password for %s. Enter password: " % repr(self.username))
                         self.sleep(0.1)
 
