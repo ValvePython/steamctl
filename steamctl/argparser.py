@@ -2,6 +2,7 @@
 from steamctl import __appname__, __version__
 from types import FunctionType
 from collections import OrderedDict
+import os
 import sys
 import argparse
 import argcomplete
@@ -61,7 +62,11 @@ def generate_parser(pre=False):
 
     parser.add_argument('--version', action='version', version="{} {}".format(__appname__, __version__))
     parser.add_argument('--versions-report', action=ActionVersionsReport)
-    parser.add_argument('-l', '--log_level', choices=['quiet','info','debug'], default='info', help='Set logging level')
+    parser.add_argument(
+        '-l', '--log_level', choices=['quiet','info','debug'],
+        default=os.getenv('STEAMCTL_LOGLEVEL', 'info'),
+        help='Set logging level'
+    )
 
     # return pre parser
     if pre:
@@ -72,8 +77,14 @@ def generate_parser(pre=False):
         parser.print_help()
 
     parser.add_argument('--anonymous', action='store_true', help='Anonymous Steam login')
-    parser.add_argument('--user', type=str, help='Username for Steam login')
-    parser.add_argument('--password', type=str, help='Password for Steam login')
+    parser.add_argument(
+        '--user', type=str, default=os.getenv('STEAMCTL_USER', None),
+        help='Username for Steam login'
+    )
+    parser.add_argument(
+        '--password', type=str, default=os.getenv('STEAMCTL_PASSWORD', None),
+        help='Password for Steam login'
+    )
     parser.set_defaults(_cmd_func=print_help)
 
     if _subcommands:
