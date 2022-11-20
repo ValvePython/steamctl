@@ -94,7 +94,12 @@ def cmd_apps_list(args):
             cdn.load_licenses()
 
         for app_id in sorted(cdn.licensed_app_ids):
-            print(app_id, app_names.get(app_id, 'Unknown App {}'.format(app_id)))
+            app_name = app_names.get(app_id, 'Unknown App {}'.format(app_id))
+            try:
+                print(f"{app_id} {app_name}")
+            except UnicodeEncodeError:
+                app_name = app_name.encode("ascii", errors="replace").decode("ascii")
+                print(f"{app_id} {app_name}")
 
 
 def cmd_apps_item_def(args):
