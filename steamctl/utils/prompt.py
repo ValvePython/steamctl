@@ -6,8 +6,8 @@ def pmt_confirmation(text, default_yes=None):
     while True:
         response = input("{} [{}/{}]: ".format(
             text,
-            'YES' if default_yes == True else 'yes',
-            'NO' if default_yes == False else 'no',
+            'YES' if default_yes else 'yes',
+            'NO' if default_yes is False else 'no',
             )).strip()
 
         if not response:

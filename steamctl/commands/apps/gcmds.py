@@ -244,7 +244,7 @@ def cmd_apps_licenses_add(args):
                 try:
                     error = EPurchaseResultDetail(resp.json()['purchaseresultdetail'])
                     LOG.error(f'Result: {error!r}')
-                except:
+                except Exception:
                     LOG.error(f'Request failed with HTTP {resp.status_code}')
                 continue
 
@@ -273,7 +273,7 @@ def cmd_apps_licenses_remove(args):
 
             info = s.get_product_info(packages=[pkg_id])['packages'][pkg_id]
 
-            resp = web.post(f'https://store.steampowered.com/account/removelicense',
+            resp = web.post('https://store.steampowered.com/account/removelicense',
                             data={'packageid': pkg_id, 'sessionid': web.cookies.get('sessionid', domain='store.steampowered.com')},
                             )
 

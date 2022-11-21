@@ -54,7 +54,7 @@ class FileBase(object):
     def mkdir(self):
         ensure_dir(self.path, 0o700)
 
-    def older_than(seconds=0, minutes=0, hours=0, days=0):
+    def older_than(self, seconds=0, minutes=0, hours=0, days=0):
         delta = seconds + (minutes*60) + (hours*3600) + (days*86400)
         ts = os.path.getmtime(self.path)
         return ts + delta > time()

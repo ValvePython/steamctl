@@ -138,7 +138,7 @@ class CachingSteamClient(SteamClient):
         if changefile.exists():
             try:
                 change_number = int(changefile.read_text())
-            except:
+            except Exception:
                 changefile.remove()
 
         self._LOG.debug("Checking PICS for app changes")
@@ -171,7 +171,11 @@ class CachingSteamClient(SteamClient):
         if cache_file.exists():
             return cache_file.read_json()
 
-    def get_product_info(self, apps=[], packages=[], *args, **kwargs):
+    def get_product_info(self, apps=None, packages=None, *args, **kwargs):
+        if apps is None:
+            apps = []
+        if packages is None:
+            packages = []
         resp = {'apps': {}, 'packages': {}}
 
         # if we have cached info for all apps, just serve from cache

@@ -74,7 +74,7 @@ class ManifestFileIndex(object):
                 self._path_cache[filepath] = (manifest, filematch.file_mapping)
 
     def file_exists(self, path):
-        return self._locate_file_mapping(path) != None
+        return self._locate_file_mapping(path) is not None
 
     def get_file(self, path, *args, **kwargs):
         ref = self._locate_file_mapping(path)
