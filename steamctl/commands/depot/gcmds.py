@@ -278,7 +278,7 @@ def cmd_depot_info(args):
             for i, manifest in enumerate(manifests, 1):
                 print("App ID:", manifest.app_id)
                 print("Depot ID:", manifest.metadata.depot_id)
-                print("Depot Name:", manifest.name if manifest.name else 'Unnamed Depot')
+                print("Depot Name:", manifest.name or 'Unnamed Depot')
                 print("Manifest GID:", manifest.metadata.gid_manifest)
                 print("Created On:", fmt_datetime(manifest.metadata.creation_time))
                 print("Size:", fmt_size(manifest.metadata.cb_disk_original))

@@ -48,7 +48,7 @@ def cmd_webapi_list(args):
     if args.format != 'text':
         if args.format == 'json':
             json.dump(json.loads(resp), sys.stdout, indent=4, sort_keys=True)
-            print('')
+            print()
         else:
             print(resp)
         return
@@ -82,7 +82,7 @@ def cmd_webapi_list(args):
                         ('- ' + param['description']) if 'description' in param else '',
                         ))
 
-                print('')
+                print()
 
 def cmd_webapi_call(args):
     # load key=value pairs. Stuff thats start with [ is a list, so parse as json
@@ -141,6 +141,6 @@ def cmd_webapi_call(args):
     # by default we print json, other formats are shown as returned from api
     if args.format == 'json':
         json.dump(json.loads(resp.rstrip('\n\t\x00 ')), sys.stdout, indent=4, sort_keys=True)
-        print('')
+        print()
     else:
         print(resp)
