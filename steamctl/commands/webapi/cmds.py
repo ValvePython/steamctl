@@ -93,7 +93,7 @@ def cmd_webapi_call(args):
         return 1  # error
 
     apicall = webapi.get
-    version = args.version or 1
+    version = args.apiver or 1
 
     if args.method == 'POST':
         apicall = webapi.post
@@ -115,7 +115,7 @@ def cmd_webapi_call(args):
         if args.method is None:
             if webapi_map[args.endpoint][0] == 'POST':
                 apicall = webapi.post
-        if args.version is None:
+        if args.apiver is None:
             version = webapi_map[args.endpoint][1]
 
     # drop reserved words. these have special meaning for steam.webapi

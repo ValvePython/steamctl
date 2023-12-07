@@ -97,7 +97,7 @@ def cmd_parser(cp):
                           help='Output format')
     scp_call.add_argument('--method', choices=['GET', 'POST'], type=str,
                           help='HTTP method to use')
-    scp_call.add_argument('--version', type=int,
+    scp_call.add_argument('--apiver', type=int,
                           help='Method version')
     scp_call.add_argument('endpoint', type=str,
                           help='WebAPI endpoint name (eg ISteamWebAPIUtil.GetSupportedAPIList)')\
